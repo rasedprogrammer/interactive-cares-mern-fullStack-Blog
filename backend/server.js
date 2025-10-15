@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./db/db.js";
+import userRouter from "./routes/user.route.js";
 
 dotenv.config();
 
@@ -12,6 +13,10 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use("/api/user", userRouter);
+// http://localhost:8000/api/user/register
 
 // Sample route
 app.get("/", (req, res) => {

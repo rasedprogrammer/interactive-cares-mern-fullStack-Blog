@@ -100,3 +100,14 @@ export const login = async (req, res) => {
       .json({ success: false, message: "Failed To Login", error });
   }
 };
+
+export const logout = async (__, res) => {
+  try {
+    return res.status(200).cookie("token", "", { maxAge: 0 }).json({
+      success: true,
+      message: "Logout Successfully",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};

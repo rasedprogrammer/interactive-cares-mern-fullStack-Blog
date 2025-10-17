@@ -12,6 +12,7 @@ cloudinary.config({
   secure: true,
 });
 
+// Create Post
 export const createPostController = async (req, res) => {
   try {
     // When userid get from authenticated middleware then remove userId from req.body
@@ -79,6 +80,79 @@ export const createPostController = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Internal Server Error to Create Post!",
+    });
+  }
+};
+
+// Update Post
+export const updatePostController = async (req, res) => {
+  try {
+    // When userid get from authenticated middleware then remove userId from req.body
+    const { title, description, content } = req.body;
+    const postId = req.params.id;
+    // find user
+    const post = await Post.findById(postId);
+
+    // if user not exist the throw a message
+    if (!post) {
+      return res.status(200).json({
+        success: false,
+        message: "Post Not Found!",
+      });
+    }
+
+    // Delete old image from Cloudinary (if exists)
+    if (post.image) {
+      const imageUrl = post.image;
+      const urlArr = imageUrl.split("/");
+      const image = urlArr[urlArr.length - 1];
+      const imageName = image.split(".")[0];
+      await cloudinary.uploader.destroy(imageName);
+    }
+
+    // Cloudinary upload options
+    const options = {
+      use_filename: true,
+      unique_filename: true,
+      overwrite: true,
+    };
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, options);
+
+    // Delete local file after upload
+    if (req.file && req.file.path) {
+      fs.unlinkSync(req.file.path);
+    } else {
+      return;
+    }
+
+    // Take the secure url
+    const image = result.secure_url;
+
+    // Create new post
+    const updatePost = await Post.findByIdAndUpdate(
+      postId,
+      {
+        title,
+        description,
+        content,
+        image,
+      },
+      { new: true }
+    );
+    res.status(201).json({
+      success: true,
+      error: false,
+      updatePost,
+      message: "Successfull to Update Post",
+    });
+  } catch (error) {
+    // Handle errors
+    res.status(500).json({
+      success: false,
+      error: true,
+      message: error.message || "Internal Server Error to Update Post!",
     });
   }
 };

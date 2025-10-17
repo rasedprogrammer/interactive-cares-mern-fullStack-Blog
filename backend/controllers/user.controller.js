@@ -1,5 +1,6 @@
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
   try {
@@ -47,5 +48,55 @@ export const register = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Failed To Register", error });
+  }
+};
+
+export const login = async (req, res) => {
+  try {
+    // Destructure Data Form req.Body
+    const { email, password } = req.body;
+    // If any Field are not given by user then trow this error
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All Field Is Required",
+      });
+    }
+    // Find the email from the db
+    let user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect Email and Password",
+      });
+    }
+    //  Compare The User Password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Credentials",
+      });
+    }
+    // Set JWT Token
+    const token = await jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
+      expiresIn: "1d",
+    });
+    return res
+      .status(200)
+      .cookie("token", token, {
+        maxAge: 1 * 24 * 60 * 60 * 1000,
+        httpsOnly: true,
+        sameStie: "strict",
+      })
+      .json({
+        success: true,
+        message: `Welcome back ${user.firstName}`,
+        user,
+      });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed To Login", error });
   }
 };

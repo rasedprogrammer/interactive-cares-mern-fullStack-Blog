@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./db/db.js";
 import userRouter from "./routes/user.route.js";
+import postRouter from "./routes/post.route.js";
 
 dotenv.config();
 
@@ -20,6 +21,9 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api/user", userRouter);
 // http://localhost:8000/api/user/register
+
+// Create Post Route
+app.use("/api/user", postRouter); // http://localhost:8000/api/user/create-post
 
 // Sample route
 app.get("/", (req, res) => {

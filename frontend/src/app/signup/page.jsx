@@ -74,7 +74,7 @@ const bricolageGrotesque = Bricolage_Grotesque({
   subsets: ["latin"],
 });
 
-export default function SingUp() {
+export default function SignUp() {
   const [error, setError] = useState();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -92,7 +92,7 @@ export default function SingUp() {
 
   async function onSubmit(values) {
     setError(undefined);
-    console.log(values);
+    console.log("Log From Sign Up From", values);
 
     // const res = await register(values);
     // if (res?.error) {

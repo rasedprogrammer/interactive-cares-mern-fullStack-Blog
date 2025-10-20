@@ -1,6 +1,8 @@
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import getDataUri from "../utils/dataUri.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const register = async (req, res) => {
   try {
@@ -25,7 +27,7 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email });
     if (existingUser) {
       return res
         .status(400)
@@ -87,7 +89,7 @@ export const login = async (req, res) => {
       .cookie("token", token, {
         maxAge: 1 * 24 * 60 * 60 * 1000,
         httpsOnly: true,
-        sameStie: "strict",
+        sameSite: "strict",
       })
       .json({
         success: true,
@@ -109,5 +111,106 @@ export const logout = async (__, res) => {
     });
   } catch (error) {
     console.log(error);
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.id;
+    const {
+      firstName,
+      lastName,
+      occupation,
+      bio,
+      instagram,
+      facebook,
+      linkedin,
+      github,
+    } = req.body;
+    const file = req.file;
+
+    const fileUri = getDataUri(file);
+    let cloudResponse = await cloudinary.uploader.upload(fileUri);
+
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    // updating data
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (occupation) user.occupation = occupation;
+    if (instagram) user.instagram = instagram;
+    if (facebook) user.facebook = facebook;
+    if (linkedin) user.linkedin = linkedin;
+    if (github) user.github = github;
+    if (bio) user.bio = bio;
+    if (file) user.photoUrl = cloudResponse.secure_url;
+
+    await user.save();
+    return res.status(200).json({
+      message: "profile updated successfully",
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update profile",
+    });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.status(200).json({
+      success: true,
+      message: "User list fetched successfully",
+      total: users.length,
+      users,
+    });
+  } catch (error) {
+    console.error("Error fetching user list:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+    });
+  }
+};
+
+// Get single user by ID
+export const getUserById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Find user by ID and exclude password
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User fetched successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch user",
+      error,
+    });
   }
 };

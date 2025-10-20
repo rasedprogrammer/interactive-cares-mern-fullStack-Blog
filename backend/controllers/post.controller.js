@@ -2,7 +2,7 @@ import Post from "../models/post.model.js";
 import { User } from "../models/user.model.js";
 import fs from "fs";
 import path from "path";
-import { cloudinary } from "../utils/cloudinary.js";
+import cloudinary from "../utils/cloudinary.js";
 
 // Create Post
 export const createPostController = async (req, res) => {

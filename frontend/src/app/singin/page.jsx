@@ -50,11 +50,11 @@ export default function SingIn() {
   });
 
   async function onSubmit(values) {
-    setError(undefined);
-    console.log(values);
+    // setError(undefined);
+    console.log("Log From Sign In Form", values);
 
-    const error = await login(values.email, values.password);
-    setError(error);
+    // const error = await login(values.email, values.password);
+    // setError(error);
   }
 
   const isSubmitting = form.formState.isSubmitting;
@@ -170,7 +170,7 @@ export default function SingIn() {
                   <p className="text-[12px] font-[400] leading-[22px] text-[#555555] text-center md:text-[14px] md:leading-[24px] xl:text-[18px] xl:leading-[28px] ">
                     Don&apos;t have an account?{" "}
                     <span className="text-[#1DBF73] underline underline-offset-1">
-                      <Link href={"/singup"}>Sign up</Link>
+                      <Link href={"/signup"}>Sign up</Link>
                     </span>
                   </p>
                 </div>

@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./db/db.js";
 import userRouter from "./routes/user.route.js";
+import cookieParser from "cookie-parser";
 import postRouter from "./routes/post.route.js";
 
 dotenv.config();
@@ -21,7 +22,9 @@ app.use(
     credentials: true,
   })
 );
+// Middleware to parse JSON and cookies
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes

@@ -1,0 +1,10 @@
+👥 Member-Wise Work Plan
+
+| Member                       | Role                          | Main Responsibilities | Key Tasks                                                                                                                                           |
+| :--------------------------- | :---------------------------- | :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1️⃣ Project Manager (PM)** | Team Lead / Coordinator       | Plan, monitor, deploy | 🧩 Setup GitHub repo & Trello board<br>📅 Assign daily tasks<br>✅ Review PRs & approve merges<br>🚀 Manage deployment & documentation               |
+| **2️⃣ Frontend Lead**        | UI development with Next.js   | Build core pages      | 🏗️ Setup Next.js + Tailwind<br>🖊️ Login/Register UI<br>📝 Blog CRUD pages (Create, Edit, View)<br>📱 Responsive layout<br>🔍 Search, Dashboard UI |
+| **3️⃣ Backend Lead**         | Express.js + MongoDB          | Build core APIs       | ⚙️ Setup Express & MongoDB<br>🧾 Blog Post CRUD endpoints<br>💬 Comment API<br>🔍 Search endpoint<br>🛠️ Admin routes for suspend/delete            |
+| **4️⃣ Auth & Security**      | Authentication & role control | Secure system         | 🔐 JWT authentication<br>📧 Email verification<br>🔑 Password reset<br>🧱 Role-based access middleware                                              |
+| **5️⃣ UI/UX Designer**       | Design & layout               | Improve usability     | 🎨 Figma wireframes (Home, Blog, Dashboard)<br>💻 Ensure responsive design<br>🪄 Add SEO meta & clean URLs<br>🧭 Review overall UX consistency      |
+| **6️⃣ QA & Deployment**      | Testing & deployment          | Final quality check   | 🧪 Test all modules (Postman + UI)<br>🐞 Report & fix bugs<br>🌐 Deploy frontend (Vercel) + backend (Render)<br>📋 Write final README + API docs    |

@@ -22,6 +22,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "This is my bio",
     },
+    occupation: {
+      type: String,
+    },
     photoUrl: {
       type: String,
     },

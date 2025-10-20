@@ -21,6 +21,9 @@ postRouter.put(
   fileUpload.single("image"),
   updatePostController
 );
+// Get All Post
+// Get All Post Search or Filter
+// Get Single Post
 
 postRouter.delete("/delete-post/:id", deletePostController);
 

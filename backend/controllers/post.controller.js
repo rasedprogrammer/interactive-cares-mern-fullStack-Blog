@@ -1,17 +1,8 @@
 import Post from "../models/post.model.js";
 import { User } from "../models/user.model.js";
-import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import path from "path";
-import dotenv from "dotenv";
-dotenv.config();
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CONFIG_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_CONFIG_API_KEY,
-  api_secret: process.env.CLOUDINARY_CONFIG_API_SECRET,
-  secure: true,
-});
+import { cloudinary } from "../utils/cloudinary.js";
 
 // Create Post
 export const createPostController = async (req, res) => {

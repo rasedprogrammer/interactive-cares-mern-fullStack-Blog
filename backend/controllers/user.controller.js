@@ -3,92 +3,127 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import getDataUri from "../utils/dataUri.js";
 import cloudinary from "../utils/cloudinary.js";
+import sendEmail from "../utils/sendEmail.js";
 
+// ----------------- REGISTER -----------------
 export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
+
     if (!firstName || !lastName || !email || !password) {
       return res
         .status(400)
         .json({ success: false, message: "Please fill all the fields" });
     }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res
         .status(400)
         .json({ success: false, message: "Please enter a valid email" });
     }
+
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
         message: "Password must be at least 6 characters",
       });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email: email });
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res
         .status(400)
         .json({ success: false, message: "User already exists" });
     }
-    // Create new user
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = new User({
       firstName,
       lastName,
       email,
       password: hashedPassword,
+      isVerified: false,
     });
+
+    // Generate verification token
+    const verificationToken = jwt.sign(
+      { userId: newUser._id },
+      process.env.SECRET_KEY,
+      { expiresIn: "1d" }
+    );
+    newUser.verificationToken = verificationToken;
+
     await newUser.save();
+
+    // Send verification email
+    const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
+    const message = `
+      <h2>Welcome ${newUser.firstName}</h2>
+      <p>Please click the link below to verify your email:</p>
+      <a href="${verificationUrl}">Verify Email</a>
+    `;
+    await sendEmail(newUser.email, "Email Verification", message);
+
     return res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      user: newUser,
+      message:
+        "User registered successfully. Check your email to verify your account.",
     });
   } catch (error) {
+    console.error(error);
     return res
       .status(500)
       .json({ success: false, message: "Failed To Register", error });
   }
 };
 
+// ----------------- LOGIN -----------------
 export const login = async (req, res) => {
   try {
-    // Destructure Data Form req.Body
     const { email, password } = req.body;
-    // If any Field are not given by user then trow this error
+
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "All Field Is Required",
+        message: "All fields are required",
       });
     }
-    // Find the email from the db
-    let user = await User.findOne({ email });
+
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Incorrect Email and Password",
+        message: "Incorrect email or password",
       });
     }
-    //  Compare The User Password
+
+    // Check if email is verified
+    if (!user.isVerified) {
+      return res.status(401).json({
+        success: false,
+        message: "Please verify your email before logging in",
+      });
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({
         success: false,
-        message: "Invalid Credentials",
+        message: "Invalid credentials",
       });
     }
-    // Set JWT Token
-    const token = await jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
+
+    const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
       expiresIn: "1d",
     });
+
     return res
       .status(200)
       .cookie("token", token, {
         maxAge: 1 * 24 * 60 * 60 * 1000,
-        httpsOnly: true,
+        httpOnly: true,
         sameSite: "strict",
       })
       .json({
@@ -97,23 +132,59 @@ export const login = async (req, res) => {
         user,
       });
   } catch (error) {
+    console.error(error);
     return res
       .status(500)
-      .json({ success: false, message: "Failed To Login", error });
+      .json({ success: false, message: "Failed to login", error });
   }
 };
 
-export const logout = async (__, res) => {
+// ----------------- LOGOUT -----------------
+export const logout = async (req, res) => {
   try {
     return res.status(200).cookie("token", "", { maxAge: 0 }).json({
       success: true,
-      message: "Logout Successfully",
+      message: "Logout successfully",
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };
 
+// ----------------- VERIFY EMAIL -----------------
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Invalid token" });
+    }
+
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Email verified successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to verify email", error });
+  }
+};
+
+// ----------------- UPDATE PROFILE -----------------
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.id;
@@ -130,87 +201,82 @@ export const updateProfile = async (req, res) => {
     const file = req.file;
 
     const fileUri = getDataUri(file);
-    let cloudResponse = await cloudinary.uploader.upload(fileUri);
+    let cloudResponse;
+    if (file) cloudResponse = await cloudinary.uploader.upload(fileUri);
 
     const user = await User.findById(userId).select("-password");
 
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-        success: false,
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-    // updating data
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
     if (occupation) user.occupation = occupation;
+    if (bio) user.bio = bio;
     if (instagram) user.instagram = instagram;
     if (facebook) user.facebook = facebook;
     if (linkedin) user.linkedin = linkedin;
     if (github) user.github = github;
-    if (bio) user.bio = bio;
-    if (file) user.photoUrl = cloudResponse.secure_url;
+    if (file && cloudResponse) user.photoUrl = cloudResponse.secure_url;
 
     await user.save();
+
     return res.status(200).json({
-      message: "profile updated successfully",
       success: true,
+      message: "Profile updated successfully",
       user,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Failed to update profile",
+      error,
     });
   }
 };
 
+// ----------------- GET ALL USERS -----------------
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "User list fetched successfully",
       total: users.length,
       users,
     });
   } catch (error) {
-    console.error("Error fetching user list:", error);
-    res.status(500).json({
+    console.error(error);
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch users",
+      error,
     });
   }
 };
 
-// Get single user by ID
+// ----------------- GET SINGLE USER -----------------
 export const getUserById = async (req, res) => {
   try {
-    const userId = req.params.id;
-
-    // Find user by ID and exclude password
-    const user = await User.findById(userId).select("-password");
-
+    const user = await User.findById(req.params.id).select("-password");
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
-
     return res.status(200).json({
       success: true,
       message: "User fetched successfully",
       user,
     });
   } catch (error) {
-    console.error("Error fetching user:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch user",
-      error,
-    });
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch user", error });
   }
 };

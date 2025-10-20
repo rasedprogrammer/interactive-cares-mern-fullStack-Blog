@@ -29,6 +29,13 @@ const userSchema = new mongoose.Schema(
     photoUrl: {
       type: String,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+    },
     instagram: {
       type: String,
       default: "",

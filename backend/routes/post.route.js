@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createPostController,
+  deletePostController,
   updatePostController,
 } from "../controllers/post.controller.js";
 import fileUpload from "../middlewares/fileUpload.js";
@@ -20,5 +21,7 @@ postRouter.put(
   fileUpload.single("image"),
   updatePostController
 );
+
+postRouter.delete("/delete-post/:id", deletePostController);
 
 export default postRouter;

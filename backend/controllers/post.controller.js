@@ -2,6 +2,7 @@ import Post from "../models/post.model.js";
 import { User } from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import path from "path";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -15,11 +16,7 @@ cloudinary.config({
 // Create Post
 export const createPostController = async (req, res) => {
   try {
-    // When userid get from authenticated middleware then remove userId from req.body
     const { title, description, content, userId } = req.body;
-    // user id get from authenticated middleware
-    // const userId = req.user.id;
-
     if (!title || !description || !content) {
       return res.status(400).json({
         message: "Please Provide all Required Fields!",
@@ -27,41 +24,36 @@ export const createPostController = async (req, res) => {
       });
     }
 
-    // find user
     const user = await User.findById(userId);
-
-    // if user not exist the throw a message
     if (!user) {
-      return res.status(200).json({
+      return res.status(404).json({
         success: false,
         message: "User Not Found!",
       });
     }
 
-    // Cloudinary upload options
-    const options = {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Image not provided!" });
+    }
+
+    const result = await cloudinary.uploader.upload(req.file.path, {
       use_filename: true,
       unique_filename: true,
       overwrite: false,
-    };
+    });
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, options);
-
-    // Delete local file after upload
-    if (req.file && req.file.path) {
-      fs.unlinkSync(req.file.path);
-    } else {
-      return;
+    // ✅ Always use absolute path
+    const filePath = path.join(process.cwd(), req.file.path);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log("✅ Local file deleted:", filePath);
     }
 
-    // Take the secure url
     const image = result.secure_url;
+    const author = `${user.firstName} ${user.lastName}`;
 
-    // Join The author name
-    const author = user.firstName + " " + user.lastName;
-
-    // Create new post
     const newPost = await Post.create({
       title,
       description,
@@ -73,10 +65,10 @@ export const createPostController = async (req, res) => {
     res.status(201).json({
       success: true,
       post: newPost,
-      message: "Successfull to Create Post",
+      message: "Successfully created post!",
     });
   } catch (error) {
-    // Handle errors
+    console.error(error);
     res.status(500).json({
       success: false,
       message: error.message || "Internal Server Error to Create Post!",
@@ -153,6 +145,43 @@ export const updatePostController = async (req, res) => {
       success: false,
       error: true,
       message: error.message || "Internal Server Error to Update Post!",
+    });
+  }
+};
+
+// Delete Post
+export const deletePostController = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    // find post
+    const post = await Post.findById(postId);
+
+    // if post not exist the throw a message
+    if (!post) {
+      return res.status(200).json({
+        success: false,
+        message: "Post Not Found!",
+      });
+    }
+    // Delete old image from Cloudinary (if exists)
+    if (post.image) {
+      const imageUrl = post.image;
+      const urlArr = imageUrl.split("/");
+      const image = urlArr[urlArr.length - 1];
+      const imageName = image.split(".")[0];
+      await cloudinary.uploader.destroy(imageName);
+    }
+    // Delete post from database
+    await Post.findByIdAndDelete(postId);
+    res.status(200).json({
+      success: true,
+      message: "Post Deleted Successfully!",
+    });
+  } catch (error) {
+    // Handle errors
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error to Delete Post!",
     });
   }
 };

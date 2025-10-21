@@ -3,6 +3,7 @@ import {
   createPostController,
   deletePostController,
   getAllPosts,
+  getSinglePostById,
   updatePostController,
 } from "../controllers/post.controller.js";
 import fileUpload from "../middlewares/fileUpload.js";
@@ -28,5 +29,8 @@ postRouter.delete("/delete-post/:id", deletePostController);
 
 // Get All Posts
 postRouter.get("/get-all-posts", getAllPosts);
+
+// Get Single Post
+postRouter.get("/get-single-post/:id", getSinglePostById);
 
 export default postRouter;

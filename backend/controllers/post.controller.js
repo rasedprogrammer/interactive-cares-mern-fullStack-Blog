@@ -211,3 +211,31 @@ export const getAllPosts = async (req, res) => {
     });
   }
 };
+
+// Get Single Post by ID
+export const getSinglePostById = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    // find post
+    const post = await Post.findById(postId);
+
+    // if post not exist the throw a message
+    if (!post) {
+      return res.status(200).json({
+        success: false,
+        message: "Post Not Found!",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      post,
+      message: "Successfull to Get Post",
+    });
+  } catch (error) {
+    // Handle errors
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error to Get Post!",
+    });
+  }
+};

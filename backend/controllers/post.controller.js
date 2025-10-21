@@ -185,3 +185,29 @@ export const deletePostController = async (req, res) => {
     });
   }
 };
+
+// Get All Posts
+export const getAllPosts = async (req, res) => {
+  try {
+    // Fetch all posts from the database, sorted by publish date in descending order
+    const posts = await Post.find().sort({ publishAt: -1 });
+    console.log(posts);
+    if (!posts || posts.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No Posts Found!",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      posts,
+      message: "Successfull to Get All Posts",
+    });
+  } catch (error) {
+    // Handle errors
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error to Get All Posts!",
+    });
+  }
+};

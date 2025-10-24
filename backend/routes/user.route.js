@@ -17,7 +17,7 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/login", login);
 router.get("/logout", logout);
-router.get("/verify/:token", verifyEmail);
+router.get("/verify", verifyEmail);
 
 // Protected routes
 router.put("/profile/update", isAuthenticated, singleUpload, updateProfile);

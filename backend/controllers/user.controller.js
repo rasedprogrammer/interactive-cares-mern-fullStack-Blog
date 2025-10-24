@@ -10,32 +10,16 @@ export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email || !password)
       return res
         .status(400)
-        .json({ success: false, message: "Please fill all the fields" });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Please enter a valid email" });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: "Password must be at least 6 characters",
-      });
-    }
+        .json({ success: false, message: "All fields are required" });
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    if (existingUser)
       return res
         .status(400)
         .json({ success: false, message: "User already exists" });
-    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -54,28 +38,28 @@ export const register = async (req, res) => {
       { expiresIn: "1d" }
     );
     newUser.verificationToken = verificationToken;
-
     await newUser.save();
 
     // Send verification email
     const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
     const message = `
-      <h2>Welcome ${newUser.firstName}</h2>
+      <h2>Hello ${newUser.firstName}</h2>
       <p>Please click the link below to verify your email:</p>
       <a href="${verificationUrl}">Verify Email</a>
     `;
+
     await sendEmail(newUser.email, "Email Verification", message);
 
     return res.status(201).json({
       success: true,
       message:
-        "User registered successfully. Check your email to verify your account.",
+        "Registered successfully. Check your email to verify your account.",
     });
   } catch (error) {
     console.error(error);
     return res
       .status(500)
-      .json({ success: false, message: "Failed To Register", error });
+      .json({ success: false, message: "Registration failed", error });
   }
 };
 
@@ -154,33 +138,78 @@ export const logout = async (req, res) => {
 // ----------------- VERIFY EMAIL -----------------
 export const verifyEmail = async (req, res) => {
   try {
-    const { token } = req.params;
-    if (!token) {
+    const token = req.query.token;
+    if (!token)
       return res.status(400).json({ success: false, message: "Invalid token" });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.SECRET_KEY);
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        const expiredToken = jwt.decode(token);
+        const user = await User.findById(expiredToken.userId);
+
+        if (!user)
+          return res
+            .status(404)
+            .json({ success: false, message: "User not found" });
+        if (user.isVerified)
+          return res
+            .status(400)
+            .json({ success: false, message: "Email already verified" });
+
+        // create new token and resend email
+        const newToken = jwt.sign(
+          { userId: user._id },
+          process.env.SECRET_KEY,
+          { expiresIn: "1d" }
+        );
+        user.verificationToken = newToken;
+        await user.save();
+
+        const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${newToken}`;
+        const message = `
+          <h2>Hello ${user.firstName}</h2>
+          <p>Your previous verification link expired. Click below to verify your email:</p>
+          <a href="${verificationUrl}">Verify Email</a>
+        `;
+        await sendEmail(user.email, "Email Verification - New Link", message);
+
+        return res.status(400).json({
+          success: false,
+          message: "Token expired. A new verification email has been sent.",
+        });
+      } else {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid token" });
+      }
     }
 
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    // Normal verification if token is valid
     const user = await User.findById(decoded.userId);
-
-    if (!user) {
+    if (!user)
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
-    }
+    if (user.isVerified)
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already verified" });
 
     user.isVerified = true;
     user.verificationToken = undefined;
     await user.save();
 
-    return res.status(200).json({
-      success: true,
-      message: "Email verified successfully",
-    });
+    return res
+      .status(200)
+      .json({ success: true, message: "Email verified successfully" });
   } catch (error) {
     console.error(error);
     return res
       .status(500)
-      .json({ success: false, message: "Failed to verify email", error });
+      .json({ success: false, message: "Verification failed", error });
   }
 };
 

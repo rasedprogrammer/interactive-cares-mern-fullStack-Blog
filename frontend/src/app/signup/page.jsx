@@ -1,9 +1,12 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Bricolage_Grotesque } from "next/font/google";
-import { Checkbox } from "@/components/ui/checkbox";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -12,71 +15,35 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useState } from "react";
-
-// import { register } from "@/lib/actions/user-actions";
-import { EyeIcon, EyeOffIcon, RotateCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-// import { register } from "@/actions/userActions/userActions";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const formSchema = z
   .object({
-    firstName: z
-      .string({ required_error: "First name is required" })
-      .trim()
-      .min(1, { message: "First name is required" })
-      .max(100, { message: "First must be less than 100 characters" }),
-    lastName: z
-      .string({ required_error: "Last name is required" })
-      .trim()
-      .min(1, { message: "Last name is required" })
-      .max(100, { message: "Last must be less than 100 characters" }),
-    email: z
-      .string({ required_error: "Email is required" })
-      .trim()
-      .min(1, { message: "Email name is required" })
-      .email({ message: "Invalid email" })
-      .max(100, { message: "Email must be less than 100 characters" }),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.string().email("Invalid email address"),
     password: z
-      .string({ required_error: "Password is required" })
-      .min(1, "Password is required")
-      .min(8, { message: "Password must be at least 8 characters long" })
-      .max(32, "Password must be less than 32 characters")
-      .refine(
-        (password) => /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/.test(password),
-        {
-          message:
-            "Password must contain at least one uppercase letter, one lowercase letter, and one number",
-        }
-      ),
-    confirmPassword: z.string({
-      required_error: "Confirm password is required",
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Must contain an uppercase letter")
+      .regex(/[0-9]/, "Must contain a number"),
+    confirmPassword: z.string().min(8, "Confirm your password"),
+    terms: z.boolean().refine((val) => val === true, {
+      message: "You must accept the terms",
     }),
-    agree: z.coerce
-      .boolean({
-        required_error:
-          "You must agree the terms of service and privacy policy",
-      })
-      .refine((val) => val === true, {
-        message: "You must agree the terms of service and privacy policy",
-      }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Confirm passwords don't match",
     path: ["confirmPassword"],
+    message: "Passwords do not match",
   });
 
-const bricolageGrotesque = Bricolage_Grotesque({
-  weight: ["400", "500", "700", "800"],
-  subsets: ["latin"],
-});
-
 export default function SignUp() {
-  const [error, setError] = useState();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -86,273 +53,195 @@ export default function SignUp() {
       email: "",
       password: "",
       confirmPassword: "",
-      agree: false,
+      terms: false,
     },
   });
 
-  async function onSubmit(values) {
-    setError(undefined);
-    console.log("Log From Sign Up From", values);
+  const onSubmit = async (values) => {
+    setLoading(true);
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user/register`,
+        values
+      );
+      toast.success(
+        "✅ Registered successfully! Please check your email to verify your account."
+      );
+      form.reset();
+    } catch (err) {
+      const message = err.response?.data?.message || "Registration failed!";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // const res = await register(values);
-    // if (res?.error) {
-    //   setError(res.error);
-    // } else {
-    //   form.reset();
-    // }
-  }
-  const isSubmitting = form.formState.isSubmitting;
   return (
-    <div className="flex justify-center bg-white min-h-screen  py-12">
-      <div className="max-w-screen-2xl w-full min-h-full flex justify-center items-center">
-        <div className="mx-[25px] md:mx-0 md:max-w-[668px] ">
-          <div
-            className={` flex flex-col gap-[12px] md:gap-[20px] justify-center items-center`}
-          >
-            <h2
-              className={`${bricolageGrotesque.className} text-[20px] font-[700] leading-[30px] text-[#282828] md:text-[30px] md:leading-[40px] xl:text-[34px] xl:leading-[44px] `}
-            >
-              <span className="text-[#1DBF73]">Create</span> your account
-            </h2>
-            <p className="text-center text-[12px] font-[400] leading-[16px] text-[#555555] md:text-[18px] md:leading-[28px]">
-              Join us and start your journey towards smarter business solutions.
-            </p>
-          </div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
+        <h2 className="text-2xl font-semibold text-center mb-2">
+          Create Your Account
+        </h2>
+        <p className="text-sm text-center text-gray-500 mb-6">
+          Join us and start your journey today 🚀
+        </p>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="flex flex-col gap-[24px] mt-[40px] md:gap-[24px] ">
-                <div className="flex flex-col gap-[12px] w-full md:flex-row md:gap-[24px]">
-                  <div className="w-full flex flex-col gap-[4px] text-[#282828]">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#282828] h-[22px] items-center flex text-[12px] font-[500] leading-[22px] md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px]">
-                            Enter your First Name
-                            <span className="text-[#FF0000]">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <div className=" px-[24px] py-[10px] rounded-[6px] bg-[#F5F5F5]  ">
-                              <Input
-                                type="text"
-                                placeholder="Enter First Name"
-                                className="text-[#555555] text-[12px] font-[400] leading-[22px] md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px] border-none p-0 focus-visible:ring-0 shadow-none"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="w-full flex flex-col gap-[4px] text-[#282828]">
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#282828] h-[22px] items-center flex text-[12px] font-[500] leading-[22px] md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px]">
-                            Enter your Last Name
-                            <span className="text-[#FF0000]">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <div className=" px-[24px] py-[10px] rounded-[6px] bg-[#F5F5F5]  ">
-                              <Input
-                                type="text"
-                                placeholder="Enter Last Name"
-                                className="text-[#555555] text-[12px] font-[400] leading-[22px] md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px] border-none p-0 focus-visible:ring-0 shadow-none"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="w-full flex flex-col gap-[4px] text-[#282828]">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#282828] h-[22px] items-center flex text-[12px] font-[500] leading-[22px] md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px]">
-                            Enter your Email
-                            <span className="text-[#FF0000]">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <div className=" px-[24px] py-[10px] rounded-[6px] bg-[#F5F5F5]  ">
-                              <Input
-                                type="Email"
-                                placeholder="Enter Email"
-                                className="text-[#555555] text-[12px] font-[400] leading-[22px] md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px] border-none p-0 focus-visible:ring-0 shadow-none"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-[12px] w-full md:flex-row md:gap-[24px]">
-                  <div className="w-full flex flex-col gap-[4px] text-[#282828]">
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#282828] h-[22px] items-center flex text-[12px] font-[500] leading-[22px] md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px]">
-                            Enter your Password
-                            <span className="text-[#FF0000]">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <div className=" px-[24px] py-[10px] rounded-[6px] bg-[#F5F5F5] relative ">
-                              <Input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Enter Password"
-                                className="text-[#555555] text-[12px] font-[400] leading-[22px] md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px] border-none p-0 focus-visible:ring-0 shadow-none pr-[24px]"
-                                autoComplete="new-password"
-                                {...field}
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-0 top-0 h-full px-[24px] py-2 hover:bg-transparent"
-                                onClick={() => setShowPassword((prev) => !prev)}
-                              >
-                                {showPassword ? (
-                                  <EyeIcon
-                                    className="h-4 w-4"
-                                    aria-hidden="true"
-                                  />
-                                ) : (
-                                  <EyeOffIcon
-                                    className="h-4 w-4"
-                                    aria-hidden="true"
-                                  />
-                                )}
-                                <span className="sr-only">
-                                  {showPassword
-                                    ? "Hide password"
-                                    : "Show password"}
-                                </span>
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="w-full flex flex-col gap-[4px] text-[#282828]">
-                    <FormField
-                      control={form.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#282828] h-[22px] items-center flex text-[12px] font-[500] leading-[22px] md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px]">
-                            Confirm Password
-                            <span className="text-[#FF0000]">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <div className=" px-[24px] py-[10px] rounded-[6px] bg-[#F5F5F5] relative ">
-                              <Input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Enter Confirm Password"
-                                className="text-[#555555] text-[12px] font-[400] leading-[22px] md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px] border-none p-0 focus-visible:ring-0 shadow-none pr-[24px]"
-                                {...field}
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-0 top-0 h-full px-[24px] py-2 hover:bg-transparent"
-                                onClick={() => setShowPassword((prev) => !prev)}
-                              >
-                                {showPassword ? (
-                                  <EyeIcon
-                                    className="h-4 w-4"
-                                    aria-hidden="true"
-                                  />
-                                ) : (
-                                  <EyeOffIcon
-                                    className="h-4 w-4"
-                                    aria-hidden="true"
-                                  />
-                                )}
-                                <span className="sr-only">
-                                  {showPassword
-                                    ? "Hide password"
-                                    : "Show password"}
-                                </span>
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-              </div>
-
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Name Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
-                name="agree"
+                name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center space-x-[12px] mt-[16px] md:mt-[24px]">
-                      <FormControl>
-                        <Checkbox
-                          id="terms"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="h-[20px] w-[20px]  data-[state=checked]:bg-[#FF6600] data-[state=checked]:border-[#FF6600]"
-                        />
-                      </FormControl>
-                      <FormLabel
-                        htmlFor="terms"
-                        className="  peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-[12px] font-[400] leading-[22px] text-[#555555] h-[22px] items-center flex md:text-[14px] md:leading-[24px] xl:text-[16px] xl:leading-[26px]"
-                      >
-                        I agree to the Terms of Service and Privacy Policy
-                      </FormLabel>
-                    </div>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="John" autoComplete="off" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              {error && <FormMessage>{error}</FormMessage>}
-              <div className="mt-[40px] md:mt-[60px]">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={`${bricolageGrotesque.className} px-[20px] py-[6px] bg-[#1DBF73] rounded-[6px] flex justify-center items-center w-full`}
-                >
-                  <span className=" flex items-center gap-[20px] text-[14px] font-[700] leading-[24px] text-[#FFFFFF] text-center md:text-[18px] md:leading-[30px]">
-                    Sign up{" "}
-                    {isSubmitting && <RotateCw className="animate-spin" />}
-                  </span>
-                </button>
-              </div>
-              <div className="h-[22px] items-center flex justify-center w-full mt-[16px]">
-                <p className="text-[12px] font-[400] leading-[22px] text-[#555555] text-center md:text-[14px] md:leading-[24px] xl:text-[18px] xl:leading-[28px] ">
-                  Already have an account?{" "}
-                  <span className="text-[#FF6600] underline underline-offset-1">
-                    <Link href={"/singin"}>Sign in</Link>
-                  </span>
-                </p>
-              </div>
-            </form>
-          </Form>
-        </div>
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Doe" autoComplete="off" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Email */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="john@example.com"
+                      autoComplete="off"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Password */}
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        autoComplete="off"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-2.5 text-gray-500"
+                      >
+                        {showPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Confirm Password */}
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        autoComplete="off"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-2 top-2.5 text-gray-500"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Terms */}
+            <FormField
+              control={form.control}
+              name="terms"
+              render={({ field }) => (
+                <FormItem className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <FormLabel className="text-sm text-gray-600">
+                    I agree to the{" "}
+                    <Link href="#" className="text-blue-500 hover:underline">
+                      terms and conditions
+                    </Link>
+                  </FormLabel>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Registering..." : "Sign Up"}
+            </Button>
+          </form>
+        </Form>
+
+        <p className="text-sm text-center text-gray-500 mt-4">
+          Already have an account?{" "}
+          <Link
+            href="/signin"
+            className="text-blue-500 hover:underline font-medium"
+          >
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );

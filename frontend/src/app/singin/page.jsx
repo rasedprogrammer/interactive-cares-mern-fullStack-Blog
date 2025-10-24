@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import EmailFast from "@/static/icon/email-fast.svg";
 import MdPassword from "@/static/icon/mdi-password.svg";
 // import EyeHide from "@/static/icon/fluent-eye-hide.svg";
@@ -39,7 +40,9 @@ const formSchema = z.object({
 });
 
 export default function SingIn() {
-  const [error, setError] = useState();
+  const [message, setMessage] = useState();
+
+  const router = useRouter();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -50,10 +53,35 @@ export default function SingIn() {
   });
 
   async function onSubmit(values) {
-    setError(undefined);
     console.log(values);
 
-    const error = await login(values.email, values.password);
+    try {
+      const res = await fetch("http://localhost:8000/api/user/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message);
+      }
+
+      setMessage(data.message || "Login successful!");
+      console.log("Token:", data.token);
+
+      //  optional: token localStorage a save
+      localStorage.setItem("token", data.token);
+
+      //  optional: form clear
+      form.reset();
+
+      router.push("/");
+    } catch (err) {
+      console.error(err);
+      setMessage(err.message || "Login failed!");
+    }
     setError(error);
   }
 
@@ -141,7 +169,7 @@ export default function SingIn() {
                           )}
                         />
 
-                        {error && <FormMessage>{error}</FormMessage>}
+                        {message && <FormMessage>{message}</FormMessage>}
 
                         <button
                           type="submit"

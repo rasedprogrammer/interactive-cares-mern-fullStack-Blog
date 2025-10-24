@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Bricolage_Grotesque } from "next/font/google";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Form,
   FormControl,
@@ -75,8 +76,9 @@ const bricolageGrotesque = Bricolage_Grotesque({
 });
 
 export default function SingUp() {
-  const [error, setError] = useState();
+  const [message, setMessage] = useState();
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -91,15 +93,25 @@ export default function SingUp() {
   });
 
   async function onSubmit(values) {
-    setError(undefined);
     console.log(values);
 
-    // const res = await register(values);
-    // if (res?.error) {
-    //   setError(res.error);
-    // } else {
-    //   form.reset();
-    // }
+    try {
+      const res = await fetch("http://localhost:8000/api/user/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      const data = await res.json();
+      setMessage(data.message || "Signup successful!");
+
+      form.reset();
+    } catch (err) {
+      console.error(err);
+      setMessage("Signup failed!");
+    }
   }
   const isSubmitting = form.formState.isSubmitting;
   return (
@@ -329,7 +341,7 @@ export default function SingUp() {
                   </FormItem>
                 )}
               />
-              {error && <FormMessage>{error}</FormMessage>}
+              {message && <FormMessage>{message}</FormMessage>}
               <div className="mt-[40px] md:mt-[60px]">
                 <button
                   type="submit"

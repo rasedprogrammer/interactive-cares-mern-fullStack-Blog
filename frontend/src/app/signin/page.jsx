@@ -31,6 +31,7 @@ export default function SignIn() {
   const onSubmit = async (values) => {
     try {
       const res = await api.post("/api/user/login", values);
+      console.log(res);
 
       // Check if user email is verified
       if (!res.data.user.isVerified) {

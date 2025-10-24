@@ -20,7 +20,15 @@ const postSchema = new mongoose.Schema({
   },
   author: {
     type: String,
+    // Author ID reference can be added later
   },
+  favourite: {
+    type: Boolean,
+    default: false,
+  },
+  // Category reference can be added later
+  // Comments reference can be added later
+  // Likes Dislikes can be added later
   publishAt: {
     type: Date,
     default: Date.now(),

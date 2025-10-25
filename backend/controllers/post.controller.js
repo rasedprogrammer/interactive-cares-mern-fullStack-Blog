@@ -1,178 +1,171 @@
-import Post from "../models/post.model.js";
+import { Post } from "../models/post.model.js";
 import { User } from "../models/user.model.js";
 import fs from "fs";
 import path from "path";
 import cloudinary from "../utils/cloudinary.js";
 
-// Create Post
+// ✅ Create Post
 export const createPostController = async (req, res) => {
   try {
-    const { title, description, content, userId } = req.body;
+    const { title, description, content } = req.body;
+    const userId = req.user?._id; // from isAuthenticated middleware
+
     if (!title || !description || !content) {
-      return res.status(400).json({
-        message: "Please Provide all Required Fields!",
-        success: false,
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: "Please provide all required fields!" });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User Not Found!",
-      });
+      return res.status(404).json({ success: false, message: "User not found!" });
     }
 
     if (!req.file) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Image not provided!" });
+      return res.status(400).json({ success: false, message: "Image not provided!" });
     }
 
     const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "blog_images",
       use_filename: true,
       unique_filename: true,
-      overwrite: false,
     });
 
-    // ✅ Always use absolute path
+    // Clean up local file
     const filePath = path.join(process.cwd(), req.file.path);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log("✅ Local file deleted:", filePath);
-    }
-
-    const image = result.secure_url;
-    const author = `${user.firstName} ${user.lastName}`;
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
     const newPost = await Post.create({
       title,
       description,
-      author,
       content,
-      image,
+      image: result.secure_url,
+      author: user._id,
     });
 
     res.status(201).json({
       success: true,
       post: newPost,
-      message: "Successfully created post!",
+      message: "Post created successfully!",
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({
       success: false,
-      message: error.message || "Internal Server Error to Create Post!",
+      message: error.message || "Internal server error while creating post!",
     });
   }
 };
 
-// Update Post
+// ✅ Update Post
 export const updatePostController = async (req, res) => {
   try {
-    // When userid get from authenticated middleware then remove userId from req.body
-    const { title, description, content } = req.body;
     const postId = req.params.id;
-    // find user
+    const { title, description, content } = req.body;
+
     const post = await Post.findById(postId);
-
-    // if user not exist the throw a message
     if (!post) {
-      return res.status(200).json({
-        success: false,
-        message: "Post Not Found!",
+      return res.status(404).json({ success: false, message: "Post not found!" });
+    }
+
+    let imageUrl = post.image;
+
+    // Only update Cloudinary image if a new file is uploaded
+    if (req.file) {
+      // Delete old image
+      if (post.image) {
+        const publicId = post.image.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(`blog_images/${publicId}`);
+      }
+
+      // Upload new one
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "blog_images",
+        use_filename: true,
+        unique_filename: true,
       });
-    }
 
-    // Delete old image from Cloudinary (if exists)
-    if (post.image) {
-      const imageUrl = post.image;
-      const urlArr = imageUrl.split("/");
-      const image = urlArr[urlArr.length - 1];
-      const imageName = image.split(".")[0];
-      await cloudinary.uploader.destroy(imageName);
-    }
-
-    // Cloudinary upload options
-    const options = {
-      use_filename: true,
-      unique_filename: true,
-      overwrite: true,
-    };
-
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, options);
-
-    // Delete local file after upload
-    if (req.file && req.file.path) {
+      imageUrl = result.secure_url;
       fs.unlinkSync(req.file.path);
-    } else {
-      return;
     }
 
-    // Take the secure url
-    const image = result.secure_url;
-
-    // Create new post
-    const updatePost = await Post.findByIdAndUpdate(
+    const updatedPost = await Post.findByIdAndUpdate(
       postId,
-      {
-        title,
-        description,
-        content,
-        image,
-      },
+      { title, description, content, image: imageUrl },
       { new: true }
     );
-    res.status(201).json({
+
+    res.status(200).json({
       success: true,
-      error: false,
-      updatePost,
-      message: "Successfull to Update Post",
+      post: updatedPost,
+      message: "Post updated successfully!",
     });
   } catch (error) {
-    // Handle errors
     res.status(500).json({
       success: false,
-      error: true,
-      message: error.message || "Internal Server Error to Update Post!",
+      message: error.message || "Internal server error while updating post!",
     });
   }
 };
 
-// Delete Post
+// ✅ Delete Post
 export const deletePostController = async (req, res) => {
   try {
     const postId = req.params.id;
-    // find post
     const post = await Post.findById(postId);
 
-    // if post not exist the throw a message
     if (!post) {
-      return res.status(200).json({
-        success: false,
-        message: "Post Not Found!",
-      });
+      return res.status(404).json({ success: false, message: "Post not found!" });
     }
-    // Delete old image from Cloudinary (if exists)
+
     if (post.image) {
-      const imageUrl = post.image;
-      const urlArr = imageUrl.split("/");
-      const image = urlArr[urlArr.length - 1];
-      const imageName = image.split(".")[0];
-      await cloudinary.uploader.destroy(imageName);
+      const publicId = post.image.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(`blog_images/${publicId}`);
     }
-    // Delete post from database
+
     await Post.findByIdAndDelete(postId);
+
     res.status(200).json({
       success: true,
-      message: "Post Deleted Successfully!",
+      message: "Post deleted successfully!",
     });
   } catch (error) {
-    // Handle errors
     res.status(500).json({
       success: false,
-      message: error.message || "Internal Server Error to Delete Post!",
+      message: error.message || "Internal server error while deleting post!",
     });
+  }
+};
+
+// ✅ Get All Posts
+export const getAllPostsController = async (req, res) => {
+  try {
+    const posts = await Post.find().populate("author", "firstName lastName email");
+    res.status(200).json({ success: true, posts });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch posts!" });
+  }
+};
+
+// ✅ Get Single Post
+export const getSinglePostController = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id).populate("author", "firstName lastName email");
+    if (!post) {
+      return res.status(404).json({ success: false, message: "Post not found!" });
+    }
+    res.status(200).json({ success: true, post });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch post!" });
+  }
+};
+
+// ✅ Get Posts by Current User
+export const getUserPostsController = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    const posts = await Post.find({ author: userId });
+    res.status(200).json({ success: true, posts });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch user posts!" });
   }
 };

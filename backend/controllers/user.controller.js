@@ -4,6 +4,10 @@ import jwt from "jsonwebtoken";
 import getDataUri from "../utils/dataUri.js";
 import cloudinary from "../utils/cloudinary.js";
 import sendEmail from "../utils/send-email.js";
+import { Post } from "../models/post.model.js";
+import { Comment } from "../models/comment.model.js";
+import { Like } from "../models/like.model.js";
+import { Dislike } from "../models/dislike.model.js";
 import crypto from "crypto";
 
 // ----------------- REGISTER -----------------
@@ -375,5 +379,33 @@ export const getUserById = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Failed to fetch user", error });
+  }
+};
+
+// ----------------- GET USER STATS -----------------
+export const getUserStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const blogsCount = await Post.countDocuments({ author: userId });
+    const commentsCount = await Comment.countDocuments({ user: userId });
+    const likesCount = await Like.countDocuments({ user: userId });
+    const dislikesCount = await Dislike.countDocuments({ user: userId });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        blogs: blogsCount,
+        comments: commentsCount,
+        likes: likesCount,
+        dislikes: dislikesCount,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user stats",
+      error: error.message,
+    });
   }
 };

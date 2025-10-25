@@ -3,28 +3,20 @@ import {
   createPostController,
   deletePostController,
   updatePostController,
+  getAllPostsController,
+  getSinglePostController,
+  getUserPostsController,
 } from "../controllers/post.controller.js";
 import fileUpload from "../middlewares/fileUpload.js";
+import { isAuthenticated } from "../middlewares/isAuthenticated.js";
 
 const postRouter = Router();
 
-// Create Post
-postRouter.post(
-  "/create-post",
-  fileUpload.single("image"),
-  createPostController
-);
-
-// Update Post
-postRouter.put(
-  "/update-post/:id",
-  fileUpload.single("image"),
-  updatePostController
-);
-// Get All Post
-// Get All Post Search or Filter
-// Get Single Post
-
-postRouter.delete("/delete-post/:id", deletePostController);
+postRouter.post("/create-post", isAuthenticated, fileUpload.single("image"), createPostController);
+postRouter.put("/update-post/:id", isAuthenticated, fileUpload.single("image"), updatePostController);
+postRouter.delete("/delete-post/:id", isAuthenticated, deletePostController);
+postRouter.get("/all-posts", getAllPostsController);
+postRouter.get("/post/:id", getSinglePostController);
+postRouter.get("/my-posts", isAuthenticated, getUserPostsController);
 
 export default postRouter;

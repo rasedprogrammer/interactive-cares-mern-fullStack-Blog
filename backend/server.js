@@ -12,6 +12,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+
+app.use(cookieParser());
 app.use(
   cors({
     origin:
@@ -24,7 +26,6 @@ app.use(
 );
 // Middleware to parse JSON and cookies
 app.use(express.json());
-app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes

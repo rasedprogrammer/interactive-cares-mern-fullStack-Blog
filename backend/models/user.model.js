@@ -22,7 +22,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "This is my bio",
     },
+    occupation: {
+      type: String,
+      default: "",
+    },
     photoUrl: {
+      type: String,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
       type: String,
     },
     instagram: {

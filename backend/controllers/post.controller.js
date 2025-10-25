@@ -1,22 +1,14 @@
 import Post from "../models/post.model.js";
 import { User } from "../models/user.model.js";
-import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import path from "path";
-import dotenv from "dotenv";
-dotenv.config();
+import cloudinary from "../utils/cloudinary.js";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CONFIG_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_CONFIG_API_KEY,
-  api_secret: process.env.CLOUDINARY_CONFIG_API_SECRET,
-  secure: true,
-});
-
-// Create Post
+// ================ Create Post ============= //
 export const createPostController = async (req, res) => {
   try {
-    const { title, description, content, userId } = req.body;
+    const userId = req.id;
+    const { title, description, content } = req.body;
     if (!title || !description || !content) {
       return res.status(400).json({
         message: "Please Provide all Required Fields!",
@@ -76,10 +68,9 @@ export const createPostController = async (req, res) => {
   }
 };
 
-// Update Post
+// ================ Update Post ============= //
 export const updatePostController = async (req, res) => {
   try {
-    // When userid get from authenticated middleware then remove userId from req.body
     const { title, description, content } = req.body;
     const postId = req.params.id;
     // find user
@@ -149,7 +140,7 @@ export const updatePostController = async (req, res) => {
   }
 };
 
-// Delete Post
+// ================ Delete Post ============= //
 export const deletePostController = async (req, res) => {
   try {
     const postId = req.params.id;
@@ -186,12 +177,12 @@ export const deletePostController = async (req, res) => {
   }
 };
 
-// Get All Posts
+// ================ Get All Posts ============= //
 export const getAllPosts = async (req, res) => {
   try {
     // Fetch all posts from the database, sorted by publish date in descending order
     const posts = await Post.find().sort({ publishAt: -1 });
-    
+
     if (!posts || posts.length === 0) {
       return res.status(200).json({
         success: true,
@@ -212,7 +203,7 @@ export const getAllPosts = async (req, res) => {
   }
 };
 
-// Get Single Post by ID
+// ================ Get Single Post By Id ============= //
 export const getSinglePostById = async (req, res) => {
   try {
     const postId = req.params.id;
@@ -236,6 +227,39 @@ export const getSinglePostById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Internal Server Error to Get Post!",
+    });
+  }
+};
+
+// ================ Search Post By Title & Description ============= //
+export const SearchPost = async (req, res) => {
+  try {
+    // /api/posts/search-posts?title="something"
+    const title = req.query.title.trim() || "";
+
+    // Matched the title
+    const searchResults = await Post.find({
+      $and: [{ title: { $regex: title, $options: "i" } }],
+    });
+
+    // If not Matched title then message the error
+    if (searchResults.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No posts found matching your search query!",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      SearchPost: searchResults,
+      message: "Successfull to Search Post",
+    });
+  } catch (error) {
+    // Handle errors
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error to Search Post!",
     });
   }
 };

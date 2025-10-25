@@ -41,6 +41,12 @@ const userSchema = new mongoose.Schema(
     verificationToken: {
       type: String,
     },
+    resetPasswordToken: {
+      type: String 
+    },
+    resetPasswordExpires: { 
+      type: Date 
+    },
     instagram: {
       type: String,
       default: "",

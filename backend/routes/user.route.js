@@ -8,6 +8,8 @@ import {
   updateProfile,
   getAllUsers,
   getUserById,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/user.controller.js";
 import { isAuthenticated } from "../middlewares/isAuthenticated.js";
 import { singleUpload } from "../middlewares/multer.js";
@@ -19,6 +21,8 @@ router.post("/register", register);
 router.post("/login", login);
 router.get("/logout", logout);
 router.get("/verify", verifyEmail);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 // -------------------- PROTECTED ROUTES -------------------- //
 // Get the logged-in user's profile

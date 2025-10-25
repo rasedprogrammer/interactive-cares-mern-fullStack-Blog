@@ -191,7 +191,7 @@ export const getAllPosts = async (req, res) => {
   try {
     // Fetch all posts from the database, sorted by publish date in descending order
     const posts = await Post.find().sort({ publishAt: -1 });
-    console.log(posts);
+    
     if (!posts || posts.length === 0) {
       return res.status(200).json({
         success: true,

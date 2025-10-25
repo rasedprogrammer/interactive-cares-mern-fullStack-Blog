@@ -5,6 +5,8 @@ import connectDB from "./db/db.js";
 import userRouter from "./routes/user.route.js";
 import cookieParser from "cookie-parser";
 import postRouter from "./routes/post.route.js";
+import likeRouter from "./routes/like.routes.js";
+import commentRouter from "./routes/comment.routes.js";
 
 dotenv.config();
 
@@ -14,6 +16,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 
 app.use(cookieParser());
+app.use("/uploads", express.static("uploads")); // serve uploaded files
 app.use(
   cors({
     origin:
@@ -33,7 +36,10 @@ app.use("/api/user", userRouter);
 // http://localhost:8000/api/user/register
 
 // Create Post Route
-app.use("/api/user", postRouter); // http://localhost:8000/api/user/create-post
+app.use("/api/posts", postRouter); // http://localhost:8000/api/user/create-post
+
+app.use("/api/likes", likeRouter);
+app.use("/api/comments", commentRouter);
 
 // Sample route
 app.get("/", (req, res) => {

@@ -1,22 +1,28 @@
-import { Router } from "express";
+import express from "express";
 import {
   createPostController,
-  deletePostController,
-  updatePostController,
-  getAllPostsController,
-  getSinglePostController,
-  getUserPostsController,
+  deletePost,
+  getMyPosts,
+  updatePost,
 } from "../controllers/post.controller.js";
-import fileUpload from "../middlewares/fileUpload.js";
 import { isAuthenticated } from "../middlewares/isAuthenticated.js";
+import { singleUpload } from "../middlewares/fileUpload.js";
 
-const postRouter = Router();
+const router = express.Router();
 
-postRouter.post("/create-post", isAuthenticated, fileUpload.single("image"), createPostController);
-postRouter.put("/update-post/:id", isAuthenticated, fileUpload.single("image"), updatePostController);
-postRouter.delete("/delete-post/:id", isAuthenticated, deletePostController);
-postRouter.get("/all-posts", getAllPostsController);
-postRouter.get("/post/:id", getSinglePostController);
-postRouter.get("/my-posts", isAuthenticated, getUserPostsController);
+// Create post (auth + optional image upload)
+router.post(
+  "/create-post",
+  isAuthenticated,
+  singleUpload,
+  createPostController
+);
+router.get("/my-blogs", isAuthenticated, getMyPosts);
 
-export default postRouter;
+// Update a post by ID
+router.put("/:id", isAuthenticated, updatePost);
+
+// Delete a post by ID
+router.delete("/:id", isAuthenticated, deletePost);
+
+export default router;

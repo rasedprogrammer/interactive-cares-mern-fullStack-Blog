@@ -4,11 +4,12 @@ import jwt from "jsonwebtoken";
 import getDataUri from "../utils/dataUri.js";
 import cloudinary from "../utils/cloudinary.js";
 import sendEmail from "../utils/send-email.js";
-import { Post } from "../models/post.model.js";
+// import { Post } from "../models/post.model.js";
 import { Comment } from "../models/comment.model.js";
 import { Like } from "../models/like.model.js";
 import { Dislike } from "../models/dislike.model.js";
 import crypto from "crypto";
+import postModel from "../models/post.model.js";
 
 // ----------------- REGISTER -----------------
 export const register = async (req, res) => {
@@ -60,6 +61,69 @@ export const register = async (req, res) => {
 };
 
 // ----------------- LOGIN -----------------
+// export const login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     if (!email || !password) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "All fields are required" });
+//     }
+
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Invalid credentials" });
+//     }
+
+//     if (!user.isVerified) {
+//       return res
+//         .status(401)
+//         .json({ success: false, message: "Please verify your email first" });
+//     }
+
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+//     if (!isPasswordValid) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Invalid credentials" });
+//     }
+
+//     // Include role and email inside the JWT
+//     const token = jwt.sign(
+//       {
+//         userId: user._id,
+//         email: user.email,
+//         role: user.role,
+//         firstName: user.firstName,
+//         photoUrl: user.photoUrl,
+//       },
+//       process.env.SECRET_KEY,
+//       { expiresIn: "1d" }
+//     );
+
+//     // Set cookie
+//     res.cookie("token", token, {
+//       httpOnly: false, // allow frontend access (for dev)
+//       secure: false,
+//       sameSite: "lax",
+//       path: "/",
+//       maxAge: 24 * 60 * 60 * 1000,
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `Welcome back ${user.firstName}`,
+//       user,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: "Login failed", error });
+//   }
+// };
+
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -90,20 +154,22 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Invalid credentials" });
     }
 
-    // Include role and email inside the JWT
+    // JWT with user info
     const token = jwt.sign(
       {
         userId: user._id,
         email: user.email,
         role: user.role,
         firstName: user.firstName,
-        photoUrl: user.photoUrl,
+        lastName: user.lastName || "",
+        photoUrl: user.photoUrl || "",
+        isVerified: user.isVerified,
       },
       process.env.SECRET_KEY,
       { expiresIn: "1d" }
     );
 
-    // Set cookie
+    // Send token in cookie AND response
     res.cookie("token", token, {
       httpOnly: false, // allow frontend access (for dev)
       secure: false,
@@ -115,7 +181,16 @@ export const login = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: `Welcome back ${user.firstName}`,
-      user,
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName || "",
+        photoUrl: user.photoUrl || "",
+        isVerified: user.isVerified,
+      },
+      token, // ✅ important: return token
     });
   } catch (error) {
     console.error(error);
@@ -214,13 +289,78 @@ export const verifyEmail = async (req, res) => {
 };
 
 // ----------------- UPDATE PROFILE -----------------
+// export const updateProfile = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const {
+//       firstName,
+//       lastName,
+//       occupation,
+//       bio,
+//       instagram,
+//       facebook,
+//       linkedin,
+//       github,
+//     } = req.body;
+
+//     const user = await User.findById(userId);
+//     if (!user)
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "User not found" });
+
+//     // Update text fields
+//     user.firstName = firstName || user.firstName;
+//     user.lastName = lastName || user.lastName;
+//     user.occupation = occupation || user.occupation;
+//     user.bio = bio || user.bio;
+//     user.instagram = instagram || user.instagram;
+//     user.facebook = facebook || user.facebook;
+//     user.linkedin = linkedin || user.linkedin;
+//     user.github = github || user.github;
+
+//     // Update photo if uploaded
+//     if (req.file) {
+//       const file = getDataUri(req.file);
+//       const uploadResult = await cloudinary.uploader.upload(file.content);
+//       user.photoUrl = uploadResult.secure_url;
+//     }
+
+//     await user.save();
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Profile updated successfully",
+//       user,
+//     });
+//   } catch (error) {
+//     console.error("Update Profile Error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Internal server error",
+//       error: error.message,
+//     });
+//   }
+// };
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { firstName, lastName, occupation, bio, instagram, facebook, linkedin, github } = req.body;
+    const {
+      firstName,
+      lastName,
+      occupation,
+      bio,
+      instagram,
+      facebook,
+      linkedin,
+      github,
+    } = req.body;
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
     // Update text fields
     user.firstName = firstName || user.firstName;
@@ -232,10 +372,15 @@ export const updateProfile = async (req, res) => {
     user.linkedin = linkedin || user.linkedin;
     user.github = github || user.github;
 
-    // Update photo if uploaded
+    // Upload image to Cloudinary if file exists
     if (req.file) {
       const file = getDataUri(req.file);
-      const uploadResult = await cloudinary.uploader.upload(file);
+      if (!file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid file" });
+      }
+      const uploadResult = await cloudinary.uploader.upload(file.content);
       user.photoUrl = uploadResult.secure_url;
     }
 
@@ -260,22 +405,26 @@ export const updateProfile = async (req, res) => {
 export const profileDetails = async (req, res) => {
   console.log("User ID in middleware:", req.user?.id); // debug
   const user = await User.findById(req.user?.id).select("-password");
-  if (!user) return res.status(404).json({ success: false, message: "User not found" });
+  if (!user)
+    return res.status(404).json({ success: false, message: "User not found" });
   res.status(200).json({ success: true, user });
 };
-
 
 // ----------------- FORGOT PASSWORD -----------------
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required" });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     // Generate a reset token
@@ -296,10 +445,14 @@ export const forgotPassword = async (req, res) => {
 
     await sendEmail(user.email, "Reset Your Password", html);
 
-    res.status(200).json({ success: true, message: "Reset password email sent" });
+    res
+      .status(200)
+      .json({ success: true, message: "Reset password email sent" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Failed to send reset email" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to send reset email" });
   }
 };
 
@@ -309,7 +462,9 @@ export const resetPassword = async (req, res) => {
     const { token, newPassword } = req.body;
 
     if (!token || !newPassword) {
-      return res.status(400).json({ message: "Token and new password are required" });
+      return res
+        .status(400)
+        .json({ message: "Token and new password are required" });
     }
 
     // Find user with the reset token and check expiry
@@ -319,7 +474,9 @@ export const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired reset token" });
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired reset token" });
     }
 
     // Hash new password
@@ -332,13 +489,16 @@ export const resetPassword = async (req, res) => {
 
     await user.save();
 
-    return res.status(200).json({ message: "Password has been reset successfully!" });
+    return res
+      .status(200)
+      .json({ message: "Password has been reset successfully!" });
   } catch (error) {
     console.error("Reset password error:", error);
-    return res.status(500).json({ message: "Server error while resetting password" });
+    return res
+      .status(500)
+      .json({ message: "Server error while resetting password" });
   }
 };
-
 
 // ----------------- GET ALL USERS -----------------
 export const getAllUsers = async (req, res) => {
@@ -387,7 +547,7 @@ export const getUserStats = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const blogsCount = await Post.countDocuments({ author: userId });
+    const blogsCount = await postModel.countDocuments({ author: userId });
     const commentsCount = await Comment.countDocuments({ user: userId });
     const likesCount = await Like.countDocuments({ user: userId });
     const dislikesCount = await Dislike.countDocuments({ user: userId });

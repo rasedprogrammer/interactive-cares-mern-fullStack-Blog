@@ -1,43 +1,47 @@
 "use client";
-import { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
+import { createContext, useContext, useEffect, useState } from "react";
+import {jwtDecode} from "jwt-decode";
 
-export const useAuth = () => {
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  console.log(user);
 
+  // Read cookie once on mount
   useEffect(() => {
-    const getTokenFromCookie = () => {
-      const match = document.cookie
+    try {
+      const token = document.cookie
         .split("; ")
-        .find((row) => row.startsWith("token="));
-      return match ? match.split("=")[1] : null;
-    };
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
 
-    const token = getTokenFromCookie();
-    if (token) {
-      try {
+      if (token) {
         const decoded = jwtDecode(token);
-        setUser(decoded);
-        console.log(setUser);
-      } catch (err) {
-        console.error("Invalid token", err);
-        setUser(null);
+        setUser({
+          id: decoded.userId,
+          email: decoded.email,
+          role: decoded.role || "user",
+          firstName: decoded.firstName || "",
+          lastName: decoded.lastName || "",
+          photoUrl: decoded.photoUrl || "",
+        });
       }
-    } else {
-      setUser(null);
+    } catch (error) {
+      console.error("Error decoding token:", error);
     }
   }, []);
 
-  // ✅ Logout function: remove token + reset user
   const logoutUser = () => {
-    // Remove cookie by setting expiry to past
-    document.cookie =
-      "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; Secure; SameSite=Lax;";
+    document.cookie = "token=; path=/; max-age=0";
     setUser(null);
-    // Optional: redirect user to signin
     window.location.href = "/signin";
   };
 
-  return { user, logoutUser };
+  return (
+    <AuthContext.Provider value={{ user, setUser, logoutUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+export const useAuth = () => useContext(AuthContext);

@@ -33,6 +33,7 @@ export default function SignIn() {
   const onSubmit = async (values) => {
     try {
       const res = await api.post("/api/user/login", values);
+      console.log(res);
 
       if (!res.data.user.isVerified) {
         toast.warning("Please verify your email before logging in!");

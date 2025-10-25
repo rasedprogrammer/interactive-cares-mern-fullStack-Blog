@@ -6,6 +6,117 @@ import cloudinary from "../utils/cloudinary.js";
 import sendEmail from "../utils/send-email.js";
 
 // ----------------- REGISTER -----------------
+// export const register = async (req, res) => {
+//   try {
+//     const { firstName, lastName, email, password } = req.body;
+
+//     if (!firstName || !lastName || !email || !password)
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "All fields are required" });
+
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser)
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "User already exists" });
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     const newUser = new User({
+//       firstName,
+//       lastName,
+//       email,
+//       password: hashedPassword,
+//       isVerified: false,
+//     });
+
+//     // Generate verification token
+//     const verificationToken = jwt.sign(
+//       { userId: newUser._id },
+//       process.env.SECRET_KEY,
+//       { expiresIn: "1d" }
+//     );
+//     newUser.verificationToken = verificationToken;
+//     await newUser.save();
+
+//     // Send verification email
+//     const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
+//     const message = `
+//       <h2>Hello ${newUser.firstName}</h2>
+//       <p>Please click the link below to verify your email:</p>
+//       <a href="${verificationUrl}">Verify Email</a>
+//     `;
+
+//     await sendEmail(newUser.email, "Email Verification", message);
+
+//     return res.status(201).json({
+//       success: true,
+//       message:
+//         "Registered successfully. Check your email to verify your account.",
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res
+//       .status(500)
+//       .json({ success: false, message: "Registration failed", error });
+//   }
+// };
+// export const register = async (req, res) => {
+//   try {
+//     const { firstName, lastName, email, password, role } = req.body;
+
+//     if (!firstName || !lastName || !email || !password)
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "All fields are required" });
+
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser)
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "User already exists" });
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     const newUser = new User({
+//       firstName,
+//       lastName,
+//       email,
+//       password: hashedPassword,
+//       role: role || "user", // default role is user
+//       isVerified: false,
+//     });
+
+//     // Generate verification token
+//     const verificationToken = jwt.sign(
+//       { userId: newUser._id },
+//       process.env.SECRET_KEY,
+//       { expiresIn: "1d" }
+//     );
+//     newUser.verificationToken = verificationToken;
+//     await newUser.save();
+
+//     const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
+//     const message = `
+//       <h2>Hello ${newUser.firstName}</h2>
+//       <p>Please click the link below to verify your email:</p>
+//       <a href="${verificationUrl}">Verify Email</a>
+//     `;
+//     await sendEmail(newUser.email, "Email Verification", message);
+
+//     return res.status(201).json({
+//       success: true,
+//       message:
+//         "Registered successfully. Check your email to verify your account.",
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res
+//       .status(500)
+//       .json({ success: false, message: "Registration failed", error });
+//   }
+// };
 export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
@@ -55,6 +166,135 @@ export const register = async (req, res) => {
 };
 
 // ----------------- LOGIN -----------------
+// export const login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     if (!email || !password) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "All fields are required",
+//       });
+//     }
+
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Incorrect email or password",
+//       });
+//     }
+
+//     // Check if email is verified
+//     if (!user.isVerified) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Please verify your email before logging in",
+//       });
+//     }
+
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+//     if (!isPasswordValid) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid credentials",
+//       });
+//     }
+
+//     const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
+//       expiresIn: "1d",
+//     });
+
+//     return res
+//       .status(200)
+//       .cookie("token", token, {
+//         maxAge: 1 * 24 * 60 * 60 * 1000,
+//         httpOnly: true,
+//         sameSite: "strict",
+//       })
+//       .json({
+//         success: true,
+//         message: `Welcome back ${user.firstName}`,
+//         user: {
+//           id: user._id,
+//           firstName: user.firstName,
+//           lastName: user.lastName,
+//           email: user.email,
+//           role: user.role,
+//           isVerified: user.isVerified,
+//         },
+//       });
+//   } catch (error) {
+//     console.error(error);
+//     return res
+//       .status(500)
+//       .json({ success: false, message: "Failed to login", error });
+//   }
+// };
+// export const login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+//     if (!email || !password)
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "All fields are required" });
+
+//     const user = await User.findOne({ email });
+//     console.log(user.isVerified);
+
+//     if (!user)
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Incorrect email or password" });
+
+//     if (!user.isVerified)
+//       return res.status(401).json({
+//         success: false,
+//         message: "Please verify your email before logging in",
+//       });
+
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+//     if (!isPasswordValid)
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Invalid credentials" });
+
+//     // Include role in JWT
+//     const token = jwt.sign(
+//       { userId: user._id, role: user.role },
+//       process.env.SECRET_KEY,
+//       {
+//         expiresIn: "1d",
+//       }
+//     );
+
+//     return res
+//       .status(200)
+//       .cookie("token", token, {
+//         maxAge: 24 * 60 * 60 * 1000,
+//         httpOnly: true,
+//         sameSite: "strict",
+//       })
+//       .json({
+//         success: true,
+//         message: `Welcome back ${user.firstName}`,
+//         user: {
+//           id: user._id,
+//           firstName: user.firstName,
+//           lastName: user.lastName,
+//           email: user.email,
+//           isVerified: user.isVerified,
+//           role: user.role, // <-- send role to frontend
+//           avatar: user.avatar || null,
+//         },
+//       });
+//   } catch (error) {
+//     console.error(error);
+//     return res
+//       .status(500)
+//       .json({ success: false, message: "Failed to login", error });
+//   }
+// };
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -209,123 +449,6 @@ export const verifyEmail = async (req, res) => {
 };
 
 // ----------------- UPDATE PROFILE -----------------
-// export const updateProfile = async (req, res) => {
-//   try {
-//     const userId = req.user.userId; // From isAuthenticated middleware
-//     const {
-//       firstName,
-//       lastName,
-//       occupation,
-//       bio,
-//       instagram,
-//       facebook,
-//       linkedin,
-//       github,
-//     } = req.body;
-//     const file = req.file;
-
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       return res.status(404).json({ success: false, message: "User not found" });
-//     }
-
-//     // Update fields if provided
-//     if (firstName) user.firstName = firstName;
-//     if (lastName) user.lastName = lastName;
-//     if (occupation) user.occupation = occupation;
-//     if (bio) user.bio = bio;
-//     if (instagram) user.instagram = instagram;
-//     if (facebook) user.facebook = facebook;
-//     if (linkedin) user.linkedin = linkedin;
-//     if (github) user.github = github;
-
-//     // Upload profile image to cloudinary if provided
-//     if (file) {
-//       const fileUri = getDataUri(file);
-//       const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
-//       user.photoUrl = cloudResponse.secure_url;
-//     }
-
-//     await user.save();
-
-//     // Create new JWT token with updated info
-//     const token = jwt.sign(
-//       { userId: user._id, role: user.role, firstName: user.firstName, avatar: user.photoUrl },
-//       process.env.SECRET_KEY,
-//       { expiresIn: "1d" }
-//     );
-
-//     // Set cookie
-//     res.cookie("token", token, {
-//       httpOnly: true,
-//       sameSite: "strict",
-//       maxAge: 24 * 60 * 60 * 1000,
-//     });
-
-//     // Return updated user (excluding password)
-//     const { password, ...userData } = user._doc;
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Profile updated successfully",
-//       user: userData,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to update profile",
-//       error,
-//     });
-//   }
-// };
-// export const updateProfile = async (req, res) => {
-//   try {
-//     const userId = req.user.id; // <-- fixed
-//     const { firstName, lastName, occupation, bio, instagram, facebook, linkedin, github } = req.body;
-//     const file = req.file;
-
-//     let cloudResponse;
-//     if (file) {
-//       const fileUri = getDataUri(file);
-//       cloudResponse = await cloudinary.uploader.upload(fileUri);
-//     }
-
-//     const user = await User.findById(userId).select("-password");
-//     if (!user) {
-//       return res.status(404).json({ success: false, message: "User not found" });
-//     }
-
-//     if (firstName) user.firstName = firstName;
-//     if (lastName) user.lastName = lastName;
-//     if (occupation) user.occupation = occupation;
-//     if (bio) user.bio = bio;
-//     if (instagram) user.instagram = instagram;
-//     if (facebook) user.facebook = facebook;
-//     if (linkedin) user.linkedin = linkedin;
-//     if (github) user.github = github;
-//     if (cloudResponse) user.photoUrl = cloudResponse.secure_url;
-
-//     await user.save();
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Profile updated successfully",
-//       user,
-//     });
-//   } catch (error) {
-//     console.error("Profile update error:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Failed to update profile",
-//       error: error.message,
-//     });
-//   }
-// };
-
-
-
-// -------
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -368,9 +491,7 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-
-
-
+// ----------------- PROFILE DETAILS -----------------
 export const profileDetails = async (req, res) => {
   console.log("User ID in middleware:", req.user?.id); // debug
   const user = await User.findById(req.user?.id).select("-password");

@@ -14,6 +14,7 @@ const MyBlogsPage = () => {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editContent, setEditContent] = useState("");
+  const [editImage, setEditImage] = useState(null);
 
   // Fetch blogs
   const fetchMyBlogs = async () => {
@@ -22,6 +23,9 @@ const MyBlogsPage = () => {
         `${process.env.NEXT_PUBLIC_API_URL}/api/posts/my-blogs`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      console.log("My Blog", res.data.posts);
+
       setBlogs(res.data.posts);
     } catch (error) {
       console.error("Fetch My Blogs Error:", error);
@@ -53,21 +57,57 @@ const MyBlogsPage = () => {
     setEditTitle(blog.title);
     setEditDescription(blog.description);
     setEditContent(blog.content);
+    setEditImage(blog.image);
   };
+
+  // Submit edit
+  // const handleEditSubmit = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     const res = await axios.put(
+  //       `${process.env.NEXT_PUBLIC_API_URL}/api/posts/${editingBlog._id}`,
+  //       {
+  //         title: editTitle,
+  //         description: editDescription,
+  //         content: editContent,
+  //         image: editImage,
+  //       },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+  //     setBlogs(
+  //       blogs.map((b) => (b._id === res.data.post._id ? res.data.post : b))
+  //     );
+  //     closeModal();
+  //   } catch (error) {
+  //     console.error("Edit Error:", error);
+  //   }
+  // };
 
   // Submit edit
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("title", editTitle);
+    formData.append("description", editDescription);
+    formData.append("content", editContent);
+
+    if (editImage && typeof editImage !== "string") {
+      formData.append("image", editImage);
+    }
+
     try {
       const res = await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/api/posts/${editingBlog._id}`,
+        formData,
         {
-          title: editTitle,
-          description: editDescription,
-          content: editContent,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
+
       setBlogs(
         blogs.map((b) => (b._id === res.data.post._id ? res.data.post : b))
       );
@@ -82,6 +122,7 @@ const MyBlogsPage = () => {
     setEditTitle("");
     setEditDescription("");
     setEditContent("");
+    setEditImage(null);
   };
 
   if (loading) return <div className="p-4">Loading...</div>;
@@ -95,7 +136,7 @@ const MyBlogsPage = () => {
           <div key={blog._id} className="border rounded-lg p-4 shadow relative">
             {blog.image && (
               <img
-                src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/${blog.image}`}
+                src={blog.image}
                 alt={blog.title}
                 className="w-full h-48 object-cover rounded mb-3"
               />
@@ -155,6 +196,23 @@ const MyBlogsPage = () => {
                 rows={4}
                 required
               />
+              {/* File Upload Start */}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setEditImage(e.target.files[0])}
+              />
+
+              {/* Preview selected image */}
+              {editImage && typeof editImage === "object" && (
+                <img
+                  src={URL.createObjectURL(editImage)}
+                  alt="preview"
+                  className="w-full h-40 object-cover rounded mt-2"
+                />
+              )}
+              {/* File Upload End */}
+
               <div className="flex justify-end gap-2 mt-2">
                 <button
                   type="button"

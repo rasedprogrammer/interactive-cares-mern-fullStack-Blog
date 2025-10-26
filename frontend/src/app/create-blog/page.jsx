@@ -37,6 +37,7 @@ export default function CreateBlogPage() {
       formData.append("content", values.content);
       formData.append("image", values.image[0]);
       formData.append("author", user.id);
+      // if (imageFile) formData.append("image", imageFile);
 
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/posts/create-post`,

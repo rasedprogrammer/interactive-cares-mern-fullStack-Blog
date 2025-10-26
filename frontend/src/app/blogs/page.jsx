@@ -5,6 +5,7 @@ import Link from "next/link";
 
 export default function BlogListPage() {
   const [blogs, setBlogs] = useState([]);
+  console.log("blog", blogs);
 
   useEffect(() => {
     axios

@@ -20,7 +20,8 @@ router.post(
 router.get("/my-blogs", isAuthenticated, getMyPosts);
 
 // Update a post by ID
-router.put("/:id", isAuthenticated, updatePost);
+// router.put("/:id", isAuthenticated, updatePost);
+router.put("/:id", isAuthenticated, singleUpload, updatePost);
 
 // Delete a post by ID
 router.delete("/:id", isAuthenticated, deletePost);

@@ -9,6 +9,8 @@
 
 // export default function ProfileUpdatePage() {
 //   const { user, setUser } = useAuth();
+//   console.log(user);
+
 //   const [formData, setFormData] = useState({
 //     firstName: "",
 //     lastName: "",
@@ -27,12 +29,18 @@
 //   useEffect(() => {
 //     const fetchProfile = async () => {
 //       try {
-//         if (!user) return;
+//         console.log(user);
 
+//         if (!user) return;
+//         console.log(user);
 //         const res = await axios.get(
 //           `${process.env.NEXT_PUBLIC_API_URL}/api/user/profile/me`,
-//           { withCredentials: true }
+//           {
+//             withCredentials: true,
+//             credentials: "include",
+//           }
 //         );
+//         // console.log(res);
 
 //         if (res.data?.user) {
 //           setFormData({
@@ -233,6 +241,8 @@ import { toast } from "react-toastify";
 
 export default function ProfileUpdatePage() {
   const { user, setUser, token } = useAuth();
+  console.log("User-Token", user, token);
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -281,10 +291,23 @@ export default function ProfileUpdatePage() {
     setFormData({ ...formData, [name]: value });
   };
 
+  // const handleImageChange = (e) => {
+  //   // const file = e.target.files[0];
+  //   // setFormData({ ...formData, image: file });
+  //   // setPhotoPreview(file ? URL.createObjectURL(file) : "");
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     setFormData({ ...formData, image: file });
+  //     setPhotoPreview(URL.createObjectURL(file));
+  //   }
+  // };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    setFormData({ ...formData, image: file });
-    setPhotoPreview(file ? URL.createObjectURL(file) : "");
+    if (file) {
+      setFormData({ ...formData, image: file });
+      setPhotoPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -298,6 +321,9 @@ export default function ProfileUpdatePage() {
           else data.append(key, formData[key]);
         }
       });
+      for (let pair of data.entries()) {
+        console.log(pair[0], pair[1]);
+      }
 
       const res = await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/api/user/profile/update`,
@@ -309,6 +335,7 @@ export default function ProfileUpdatePage() {
           },
         }
       );
+      console.log("After Profile Update Api Call: ", res);
 
       if (res.data.success) {
         toast.success("Profile updated!");
@@ -341,12 +368,6 @@ export default function ProfileUpdatePage() {
             alt="Preview"
             className="w-20 h-20 rounded-full object-cover"
           />
-          {/* <input
-            type="file"
-            name="image"
-            accept="image/*"
-            onChange={handleImageChange}
-          /> */}
           <input
             type="file"
             name="image"

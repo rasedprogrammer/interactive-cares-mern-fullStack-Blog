@@ -10,14 +10,26 @@
 
 // export default getDataUri;
 
-import DatauriParser from "datauri/parser.js";
+// const DatauriParser = require('datauri/parser');
+// import path from "path";
+
+// const parser = new DatauriParser();
+
+// const getDataUri = (file) => {
+//   if (!file || !file.buffer) return null; // safety check
+//   return parser.format(path.extname(file.originalname), file.buffer);
+// };
+
+// export default getDataUri;
+
+import DataURIParser from "datauri/parser.js";
 import path from "path";
 
-const parser = new DatauriParser();
+const parser = new DataURIParser();
 
 const getDataUri = (file) => {
-  if (!file || !file.buffer) return null; // safety check
-  return parser.format(path.extname(file.originalname), file.buffer);
+  if (!file) return null;
+  const extName = path.extname(file.originalname).toString();
+  return parser.format(extName, file.buffer);
 };
-
 export default getDataUri;

@@ -4,6 +4,7 @@ import path from "path";
 import cloudinary from "../utils/cloudinary.js";
 import postModel from "../models/post.model.js";
 import getDataUri from "../utils/dataUri.js";
+import mongoose from "mongoose";
 
 // ✅ Create Post    (COMPLETED)
 export const createPostController = async (req, res) => {
@@ -80,7 +81,7 @@ export const updatePost = async (req, res) => {
   }
 };
 
-// ✅ Delete Post
+// ✅ Delete Post (COMPLETED)
 export const deletePost = async (req, res) => {
   try {
     console.log("Deleting post with id:", req.params.id);
@@ -99,34 +100,36 @@ export const deletePost = async (req, res) => {
   }
 };
 
-// ✅ Get All Posts
-// export const getAllPostsController = async (req, res) => {
-//   try {
-//     const posts = await postModel
-//       .find()
-//       .populate("author", "firstName lastName email");
-//     res.status(200).json({ success: true, posts });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: "Failed to fetch posts!" });
-//   }
-// };
+// ✅ Get All Posts by ID (COMPLETED)
+export const getSinglePostController = async (req, res) => {
+  const { id } = req.params;
 
-// ✅ Get Single Post
-// export const getSinglePostController = async (req, res) => {
-//   try {
-//     const post = await postModel
-//       .findById(req.params.id)
-//       .populate("author", "firstName lastName email");
-//     if (!post) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "Post not found!" });
-//     }
-//     res.status(200).json({ success: true, post });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: "Failed to fetch post!" });
-//   }
-// };
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ success: false, message: "Invalid post ID" });
+  }
+
+  try {
+    const post = await postModel
+      .findById(id)
+      .populate("author", "firstName lastName email");
+
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+    }
+
+    // Increment views
+    post.views = (post.views || 0) + 1;
+    await post.save();
+
+    res.status(200).json({ success: true, post });
+  } catch (error) {
+    console.error("Get Single Post Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
 
 // ✅ Get Posts by Current User  (COMPLETED)
 export const getMyPosts = async (req, res) => {
@@ -138,5 +141,95 @@ export const getMyPosts = async (req, res) => {
   } catch (error) {
     console.error("Get My Posts Error:", error);
     res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Like Post (COMPLETED)
+export const likePost = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id; // ✅ use `id` from middleware
+
+  if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const post = await postModel.findById(id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    // Remove user from dislikes if exists
+    post.dislikes = post.dislikes?.filter((uid) => uid.toString() !== userId);
+
+    // Toggle like: remove if already liked
+    if (post.likes?.some((uid) => uid.toString() === userId)) {
+      post.likes = post.likes.filter((uid) => uid.toString() !== userId);
+    } else {
+      post.likes = post.likes || [];
+      post.likes.push(userId);
+    }
+
+    await post.save();
+    res.status(200).json({ likes: post.likes, dislikes: post.dislikes });
+  } catch (err) {
+    console.error("Like Post Error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Dislike Post (COMPLETED)
+export const dislikePost = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id; // ✅ use `id` from middleware
+
+  if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const post = await postModel.findById(id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    // Remove user from likes if exists
+    post.likes = post.likes?.filter((uid) => uid.toString() !== userId);
+
+    // Toggle dislike: remove if already disliked
+    if (post.dislikes?.some((uid) => uid.toString() === userId)) {
+      post.dislikes = post.dislikes.filter((uid) => uid.toString() !== userId);
+    } else {
+      post.dislikes = post.dislikes || [];
+      post.dislikes.push(userId);
+    }
+
+    await post.save();
+    res.status(200).json({ likes: post.likes, dislikes: post.dislikes });
+  } catch (err) {
+    console.error("Dislike Post Error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Add comment (COMPLETED)
+export const addComment = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const post = await postModel.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const comment = { user: req.user.id, text };
+    post.comments.push(comment);
+    await post.save();
+
+    await post.populate("comments.user", "firstName lastName"); // populate user info
+    res.status(201).json({ comments: post.comments });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Get Recent Posts (COMPLETED)
+export const getRecentPosts = async (req, res) => {
+  try {
+    const posts = await postModel.find().sort({ createdAt: -1 }).limit(5);
+    res.status(200).json({ success: true, posts });
+  } catch (err) {
+    console.error("Recent posts error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };

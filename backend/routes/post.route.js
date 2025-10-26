@@ -1,22 +1,20 @@
-import { Router } from "express";
+import express from "express";
+import { isAuthenticated } from "../middlewares/isAuthenticated.js";
+import { singleUpload } from "../middlewares/multer.js";
 import {
   createPostController,
-  deletePostController,
   updatePostController,
+  deletePostController,
   getAllPostsController,
   getSinglePostController,
-  getUserPostsController,
 } from "../controllers/post.controller.js";
-import fileUpload from "../middlewares/fileUpload.js";
-import { isAuthenticated } from "../middlewares/isAuthenticated.js";
 
-const postRouter = Router();
+const router = express.Router();
 
-postRouter.post("/create-post", isAuthenticated, fileUpload.single("image"), createPostController);
-postRouter.put("/update-post/:id", isAuthenticated, fileUpload.single("image"), updatePostController);
-postRouter.delete("/delete-post/:id", isAuthenticated, deletePostController);
-postRouter.get("/all-posts", getAllPostsController);
-postRouter.get("/post/:id", getSinglePostController);
-postRouter.get("/my-posts", isAuthenticated, getUserPostsController);
+router.post("/create-post", isAuthenticated, singleUpload, createPostController);
+router.put("/update-post/:id", isAuthenticated, singleUpload, updatePostController);
+router.delete("/delete-post/:id", isAuthenticated, deletePostController);
+router.get("/all-posts", getAllPostsController);
+router.get("/single-post/:id", getSinglePostController);
 
-export default postRouter;
+export default router;

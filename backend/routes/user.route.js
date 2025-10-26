@@ -10,7 +10,7 @@ import {
   getUserById,
   forgotPassword,
   resetPassword,
-  getUserStats, // ✅ make sure this function exists in your controller
+  getUserStats,
 } from "../controllers/user.controller.js";
 import { isAuthenticated } from "../middlewares/isAuthenticated.js";
 import { singleUpload } from "../middlewares/multer.js";
@@ -26,19 +26,13 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 
 // -------------------- PROTECTED ROUTES -------------------- //
-// ✅ Dashboard stats: number of blogs, comments, likes, dislikes
 router.get("/stats", isAuthenticated, getUserStats);
-
-// ✅ Get logged-in user's profile
 router.get("/profile/me", isAuthenticated, profileDetails);
 
-// ✅ Update profile (with optional image upload)
 router.put("/profile/update", isAuthenticated, singleUpload, updateProfile);
 
-// ✅ Admin or authorized user - Get all users
+// Admin-only routes (you can add a role check middleware if needed)
 router.get("/all-users", isAuthenticated, getAllUsers);
-
-// ✅ Get single user by ID
 router.get("/:id", isAuthenticated, getUserById);
 
 export default router;

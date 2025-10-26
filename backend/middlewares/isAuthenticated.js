@@ -9,14 +9,16 @@ export const isAuthenticated = (req, res, next) => {
         .json({ success: false, message: "Not authenticated" });
     }
 
-    // Verify JWT
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
-    // Attach user info to request
     req.user = {
-      id: decoded.userId,       // userId must be stored in JWT during login
+      id: decoded.userId,
       role: decoded.role || "user",
-      email: decoded.email || null, // optional
+      email: decoded.email || null,
+      photoUrl: decoded.photoUrl || null,
+      isverified: decoded.isverified || false,
+      firstName: decoded.firstName || null,
+      lastName: decoded.lastName || null,
     };
 
     next();
@@ -27,5 +29,3 @@ export const isAuthenticated = (req, res, next) => {
       .json({ success: false, message: "Invalid or expired token" });
   }
 };
-
-

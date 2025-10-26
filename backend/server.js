@@ -9,7 +9,7 @@ import postRouter from "./routes/post.route.js";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 // Middleware
 
@@ -33,7 +33,12 @@ app.use("/api/user", userRouter);
 // http://localhost:8000/api/user/register
 
 // Create Post Route
-app.use("/api/user", postRouter); // http://localhost:8000/api/user/create-post
+app.use("/api/posts", postRouter); // http://localhost:8000/api/post/create
+
+app.use((req, res, next) => {
+  console.log(`➡️ ${req.method} ${req.url}`);
+  next();
+});
 
 // Sample route
 app.get("/", (req, res) => {

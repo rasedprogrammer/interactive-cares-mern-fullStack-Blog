@@ -1,0 +1,54 @@
+// blog-application/backend/models/User.js
+
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const userSchema = mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+        },
+        email: {
+            type: String,
+            required: true,
+            unique: true, // FR-1.1: Email must be unique
+        },
+        password: {
+            type: String,
+            required: true,
+        },
+        role: {
+            type: String,
+            enum: ['Admin', 'Regular User'], // NFR-4.1.1: Role-based access control
+            default: 'Regular User',
+        },
+        // We will add the 'isVerified' field later for email verification (FR-1.2)
+    },
+    {
+        timestamps: true, // Automatic createdAt and updatedAt fields
+    }
+);
+
+// --- Middleware: Encrypt password before saving (NFR-4.1.3) ---
+userSchema.pre('save', async function (next) {
+    // Only run this function if password was actually modified
+    if (!this.isModified('password')) {
+        next();
+    }
+
+    // Generate a salt and hash the password
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
+// --- Method to compare passwords for login ---
+userSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;

@@ -7,12 +7,14 @@ import { fetchPostById, updatePost } from '@/utils/postApi';
 import { useSelector } from 'react-redux';
 import { fetchCategories } from '@/utils/categoryApi'; 
 import ImageUploader from '@/components/ImageUploader';
+import TextEditor from '@/components/TextEditor';
 
 const EditPostPage = () => {
     const params = useParams();
     const postId = params.id;
     const { userInfo } = useSelector((state) => state.auth);
     const router = useRouter();
+    const [mounted, setMounted] = useState(false);
 
     const [post, setPost] = useState(null);
     const [formData, setFormData] = useState({
@@ -28,6 +30,11 @@ const EditPostPage = () => {
     
     // Check for lock status (reads from the original post state)
     const isSuspended = post?.status === 'Suspended'; 
+
+     // To avoid hydration mismatch
+        useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // 1. Fetch Post Data and Categories on load
     useEffect(() => {
@@ -108,6 +115,8 @@ const EditPostPage = () => {
         }
     };
 
+    if (!mounted) return null;
+
     if (!userInfo) return <div className="text-center py-20">Redirecting to Login...</div>;
     if (loading) return <div className="text-center py-20">Loading Post for Editing...</div>;
     if (error) return <div className="text-center py-20 text-red-600">Error: {error}</div>;
@@ -135,7 +144,7 @@ const EditPostPage = () => {
                 {/* CONTENT FIELD */}
                 <div>
                     <label htmlFor="content" className="block text-lg font-medium text-gray-700 mb-1">Content</label>
-                    <TextEditor 
+                    <TextEditor
                         content={post.content} 
                         onChange={(content) => handleChange({ target: { name: 'content', value: content } })}
                         placeholder="Start writing your amazing content here..."

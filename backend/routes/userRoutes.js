@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, admin } = require('../middleware/authMiddleware'); // Import the protect middleware
-const { registerUser, authUser, getUserProfile, getUsers, updateUserByAdmin, deleteUser } = require('../controllers/userController');
+const { registerUser, authUser, getUserProfile, getUsers, updateUserByAdmin, deleteUser, forgotPassword, resetPassword } = require('../controllers/userController');
 
 // GET /api/users - Get all users (Admin Only)
 router.route('/').get(protect, admin, getUsers);
@@ -25,6 +25,12 @@ router
     .route('/:id')
     .put(protect, admin, updateUserByAdmin)
     .delete(protect, admin, deleteUser);
+
+// Forgot Password Route
+router.post('/forgot-password', forgotPassword);
+
+// Reset Password Route (Dynamic token parameter)
+router.put('/reset-password/:token', resetPassword);
 
 
 module.exports = router;

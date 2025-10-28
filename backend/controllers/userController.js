@@ -1,6 +1,7 @@
 // blog-application/backend/controllers/userController.js
 
 const asyncHandler = require('express-async-handler'); // Helper for handling async errors
+const sendEmail = require('../utils/sendEmail');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken'); // FR-1.5, NFR-4.1.1: For JWT Auth
 
@@ -157,5 +158,111 @@ const deleteUser = asyncHandler(async (req, res) => {
     }
 });
 
+const crypto = require('crypto'); // Step 2: Import crypto for token generation
 
-module.exports = { registerUser, authUser, getUserProfile, getUsers, updateUserByAdmin, deleteUser };
+// NOTE: Placeholder function for sending email (replace with actual service later)
+const sendResetEmail = (email, resetUrl) => {
+    console.log(`\n--- EMAIL RESET LINK ---`);
+    console.log(`To: ${email}`);
+    console.log(`Reset URL: ${resetUrl}`);
+    console.log(`--- END EMAIL RESET LINK ---\n`);
+    // In a real app, integrate nodemailer/SendGrid/etc. here
+};
+
+
+// @desc    Generate password reset token and send email
+// @route   POST /api/users/forgot-password
+// @access  Public (FR-3.1)
+const forgotPassword = asyncHandler(async (req, res) => {
+    // 1. FIND THE USER DOCUMENT BY EMAIL
+    const user = await User.findOne({ email: req.body.email }); // <--- RESTORED
+
+    if (!user) {
+        // IMPORTANT: Always return a success message for security, even if the user isn't found
+        return res.status(200).json({ message: 'If a user with that email exists, a password reset link has been sent.' });
+    }
+
+    // 2. TOKEN GENERATION AND SAVING LOGIC (RESTORED FROM PREVIOUS STEP)
+    const resetToken = crypto.randomBytes(20).toString('hex');
+
+    user.resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; 
+
+    await user.save({ validateBeforeSave: false });
+
+    // Create reset URL
+    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+
+    const message = `
+        <h1>You have requested a password reset</h1>
+        <p>Please go to this link to reset your password. This link is valid for 10 minutes:</p>
+        <a href="${resetUrl}" clicktracking="off">${resetUrl}</a>
+        <p>If you did not request this, please ignore this email.</p>
+    `;
+
+    // 3. CALL sendEmail USING THE DOCUMENT INSTANCE
+    try {
+        await sendEmail({
+            email: user.email, // <--- CORRECT: Using user.email (document instance)
+            subject: 'Password Reset Request for Blog Application',
+            message: message,
+        });
+
+        res.status(200).json({
+            message: 'Password reset link sent successfully to your email.',
+        });
+    } catch (error) {
+        console.error('Email failed to send:', error);
+        // Clear token on failure
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save({ validateBeforeSave: false });
+        
+        res.status(500);
+        throw new Error('Password reset email failed to send. Please try again later.');
+    }
+});
+
+// @desc    Reset password using token
+// @route   PUT /api/users/reset-password/:token
+// @access  Public (FR-3.1)
+const resetPassword = asyncHandler(async (req, res) => {
+    const { password } = req.body;
+    const { token } = req.params;
+
+    // Hash the URL token to search the database
+    const resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(token)
+        .digest('hex');
+
+    const user = await User.findOne({
+        resetPasswordToken,
+        resetPasswordExpire: { $gt: Date.now() }, // Token must not be expired
+    });
+
+    if (!user) {
+        res.status(400);
+        throw new Error('Invalid or expired password reset token.');
+    }
+
+    // Hash the new password (The pre('save') hook in User.js will handle the hashing!)
+    user.password = password; 
+    
+    // Clear the token fields after a successful reset
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save(); // Save triggers the password hash
+
+    res.status(200).json({
+        message: 'Password reset successful. You can now log in with your new password.',
+    });
+});
+
+
+module.exports = { registerUser, authUser, getUserProfile, getUsers, updateUserByAdmin, deleteUser, forgotPassword, resetPassword };

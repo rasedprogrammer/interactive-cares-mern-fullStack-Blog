@@ -38,3 +38,17 @@ export const register = async (name, email, password) => {
 
     return data;
 };
+
+// @desc Request password reset link (Forgot Password)
+export const forgotPassword = async (email) => {
+    const config = { headers: { 'Content-Type': 'application/json' } };
+    const { data } = await axios.post(`${API_URL}/users/forgot-password`, { email }, config);
+    return data.message; // Return success message
+};
+
+// @desc Submit new password with token
+export const resetPassword = async (token, password) => {
+    const config = { headers: { 'Content-Type': 'application/json' } };
+    const { data } = await axios.put(`${API_URL}/users/reset-password/${token}`, { password }, config);
+    return data.message; // Return success message
+};

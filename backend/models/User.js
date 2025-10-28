@@ -24,6 +24,8 @@ const userSchema = mongoose.Schema(
             default: 'Regular User',
         },
         // We will add the 'isVerified' field later for email verification (FR-1.2)
+        resetPasswordToken: String,
+        resetPasswordExpire: Date,
     },
     {
         timestamps: true, // Automatic createdAt and updatedAt fields

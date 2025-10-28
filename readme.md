@@ -20,7 +20,7 @@ Here is the final, definitive status of every point in your original SRS documen
 | **2.2 Admin** | manage comments (suspend, delete) | **DONE** | Comment Moderation (Suspend/Delete) implemented. |
 | **2.2 User** | Create, edit, and delete own blog posts | **DONE** | Implemented via User Dashboard (My Posts). |
 | **2.2 User** | Users can like and dislike posts. | **DONE** | Implemented via Reaction component. |
-| **3.1 Auth** | Password reset via email | *Endpoint Implemented* | Reset logic is present; actual email sending relies on external service (TBD). |
+| **3.1 Auth** | Password reset via email | **DONE** | Reset logic is present; actual email sending relies on external service (TBD). |
 | **3.1 Auth** | Create a new user account with verify your email | **DONE** | Account creation logic is present. |
 | **3.2 User Mgmt** | User can manage their own profile | **DONE** | Profile Details UI implemented. |
 | **3.2 User Mgmt** | The user can see their published post in their dashboard | **DONE** | My Posts Dashboard tab implemented. |

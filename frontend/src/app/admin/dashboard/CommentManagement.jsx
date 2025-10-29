@@ -104,7 +104,7 @@ const CommentManagement = () => {
                     <tbody className="bg-white divide-y divide-gray-200">
                         {comments.map((comment) => (
                             <tr key={comment._id} className={comment.isSuspended ? 'bg-red-50' : ''}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{comment.user.name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{comment.user ? comment.user.name : 'Deleted User'} </td>
                                 <td className="px-6 py-4 text-sm text-gray-700 max-w-xs overflow-hidden text-ellipsis">
                                     {comment.content.substring(0, 50)}...
                                 </td>

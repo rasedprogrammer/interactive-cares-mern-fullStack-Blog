@@ -79,18 +79,51 @@ const authUser = asyncHandler(async (req, res) => {
 // @route   GET /api/users/profile
 // @access  Private (Requires JWT)
 const getUserProfile = asyncHandler(async (req, res) => {
-    // req.user is populated by the protect middleware (contains the user object without password)
-    const user = req.user; 
+    const user = await User.findById(req.user._id);
 
     if (user) {
-        res.json({
+        if (req.method === 'PUT') {
+            // --- PUT (Update) Logic ---
+            user.name = req.body.name || user.name;
+            // NOTE: Changing email is complex (requires re-verification), so we will block it.
+            // user.email = req.body.email || user.email;
+            
+            user.bio = req.body.bio || user.bio;
+            user.profilePicture = req.body.profilePicture || user.profilePicture;
+            user.website = req.body.website || user.website;
+            user.location = req.body.location || user.location;
+            user.github = req.body.github || user.github;
+
+            const updatedUser = await user.save();
+            
+            // Return updated user data (including new JWT if needed, but we skip for now)
+            return res.json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                bio: updatedUser.bio,
+                profilePicture: updatedUser.profilePicture,
+                website: updatedUser.website,
+                location: updatedUser.location,
+                github: updatedUser.github,
+                // token: generateToken(updatedUser._id), // Optionally generate a new token
+            });
+        }
+        
+        res.status(201).json({ 
             _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
-            createdAt: user.createdAt,
-            // Include other profile fields like bio, profilePicture etc. later
+            bio: user.bio, // <--- ADDED
+            profilePicture: user.profilePicture, // <--- ADDED
+            website: user.website, // <--- ADDED
+            location: user.location, // <--- ADDED
+            github: user.github, // <--- ADDED
+            token: generateToken(user._id),
         });
+        
     } else {
         res.status(404);
         throw new Error('User not found');

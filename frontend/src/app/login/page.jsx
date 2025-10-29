@@ -95,6 +95,9 @@ const LoginPage = () => {
                 </form>
                 
                 <div className="text-sm text-center">
+                    Forgot Password? <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">Reset Here</Link>
+                </div>
+                <div className="text-sm text-center">
                     New User? <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">Register Here</Link>
                 </div>
             </div>

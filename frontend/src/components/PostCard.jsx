@@ -48,7 +48,7 @@ const PostCard = ({ post }) => {
                 {/* Author, Date, Read Time (FR-3.9) */}
                 <div className="flex items-center text-sm text-gray-500 space-x-3">
                     {/* Author is populated: post.user.name */}
-                    <p>By <span className="font-semibold text-gray-700">{post.user.name}</span></p> 
+                    <p>By <span className="font-semibold text-gray-700">{post.user && post.user.name ? post.user.name : 'Deleted Author'} </span></p> 
                     <p>•</p>
                     <p>{formatDate(post.createdAt)}</p>
                     <p>•</p>

@@ -4,7 +4,8 @@ const { protect, admin } = require('../middleware/authMiddleware');
 const { 
     createPost, getPublishedPosts, getPostBySlug, toggleReaction, 
     suspendPost, deletePost, getAllPostsAdmin, getMyPosts,
-    updatePost, getPostById, deletePostByUser
+    updatePost, getPostById, deletePostByUser, getPostsByAuthor,
+    getLatestPosts
 } = require('../controllers/postController');
 
 // 1. General/List/Create Routes
@@ -24,6 +25,10 @@ router.put('/edit/:id', protect, updatePost);       // PUT /api/posts/edit/:id (
 router.delete('/admin/:id', protect, admin, deletePost); // DELETE /api/posts/admin/:id (Admin Delete)
 router.put('/admin/:id/suspend', protect, admin, suspendPost); // PUT /api/posts/admin/:id/suspend
 router.put('/react/:postId', protect, toggleReaction);      // PUT /api/posts/react/:postId
+
+// GET /api/posts/author/:id - Public route to list an author's posts
+router.route('/author/:id').get(getPostsByAuthor); 
+router.route('/latest/:excludeId').get(getLatestPosts); 
 
 // --- 4. PUBLIC SLUG ROUTE (ABSOLUTELY LAST) ---
 router.route('/:slug').get(getPostBySlug); // GET /api/posts/:slug

@@ -93,9 +93,9 @@ const getPublishedPosts = asyncHandler(async (req, res) => {
 
     // 3. Find posts with the combined filter
     const posts = await Post.find(filter)
-        .populate('user', 'name')
+        .populate('user', 'name profilePicture bio')
         .sort({ createdAt: -1 });
-
+ 
     res.json(posts);
 });
 
@@ -106,7 +106,7 @@ const getPublishedPosts = asyncHandler(async (req, res) => {
 const getPostBySlug = asyncHandler(async (req, res) => {
     // Find the post by the slug from the URL parameters
     const post = await Post.findOne({ slug: req.params.slug })
-        .populate('user', 'name'); // Populate the author's name
+        .populate('user', 'name profilePicture bio'); // Populate the author's name, profile picture, and bio
 
     if (post) {
         // Only return published posts to the public
@@ -236,7 +236,7 @@ const deletePost = asyncHandler(async (req, res) => {
 const getAllPostsAdmin = asyncHandler(async (req, res) => {
     // Return all posts, populate author name
     const posts = await Post.find({})
-        .populate('user', 'name')
+        .populate('user', 'name profilePicture bio')
         .sort({ createdAt: -1 });
     res.json(posts);
 });
@@ -321,7 +321,7 @@ const updatePost = asyncHandler(async (req, res) => {
 // @access  Private (Author/Admin)
 const getPostById = asyncHandler(async (req, res) => {
     const post = await Post.findById(req.params.id)
-        .populate('user', 'name');
+        .populate('user', 'name profilePicture bio'); // Populate author's name, profile picture, and bio
 
     if (post) {
         // Ownership Check: Author can view Draft/Suspended, Admin can view all
@@ -365,6 +365,44 @@ const deletePostByUser = asyncHandler(async (req, res) => {
     }
 });
 
+
+// @desc    Fetch all published posts by a specific user ID
+// @route   GET /api/posts/author/:id
+// @access  Public
+const getPostsByAuthor = asyncHandler(async (req, res) => {
+    const authorId = req.params.id;
+
+    // Find all published posts by this author ID
+    const posts = await Post.find({ 
+            user: authorId, 
+            status: 'Published' 
+        })
+        .populate('user', 'name profilePicture bio') 
+        .sort({ createdAt: -1 });
+
+    res.json(posts);
+});
+
+// @desc    Fetch latest published posts (max 5), excluding a given ID
+// @route   GET /api/posts/latest/:excludeId
+// @access  Public
+const getLatestPosts = asyncHandler(async (req, res) => {
+    const excludeId = req.params.excludeId;
+
+    // Build the query to find published posts AND exclude the current post ID
+    const query = {
+        status: 'Published',
+        _id: { $ne: excludeId } // $ne = Not Equal (Exclude the current post ID)
+    };
+
+    const posts = await Post.find(query)
+        .select('title slug') // Only fetch fields needed for the link
+        .sort({ createdAt: -1 })
+        .limit(5); // Limit to 5 posts
+
+    res.json(posts);
+});
+
 module.exports = { 
     createPost, 
     getPublishedPosts, 
@@ -376,5 +414,7 @@ module.exports = {
     getMyPosts,
     updatePost,
     getPostById,
-    deletePostByUser
+    deletePostByUser,
+    getPostsByAuthor,
+    getLatestPosts
 };

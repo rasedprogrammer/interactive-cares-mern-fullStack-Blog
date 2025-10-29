@@ -1,11 +1,15 @@
 // blog-application/frontend/src/components/SanitizedContent.jsx
 'use client';
 
-import DOMPurify from 'dompurify';
 import React from 'react';
+import * as DOMPurifyModule from 'dompurify'; 
+
+
+const DOMPurify = DOMPurifyModule.default || DOMPurifyModule;
 
 const SanitizedContent = ({ htmlContent, className }) => {
-    const cleanHtml = DOMPurify.sanitize(htmlContent);
+     const sanitizer = typeof window !== 'undefined' ? DOMPurify : { sanitize: (html) => html };
+    const cleanHtml = sanitizer.sanitize(htmlContent);
 
     // ... (existing empty content check) ...
     const plainText = cleanHtml.replace(/<[^>]*>/g, ''); 

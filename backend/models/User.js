@@ -23,6 +23,24 @@ const userSchema = mongoose.Schema(
             enum: ['Admin', 'Regular User'], // NFR-4.1.1: Role-based access control
             default: 'Regular User',
         },
+        bio: {
+            type: String,
+            default: 'A proud member of the Blog App community.',
+            maxlength: 500,
+        },
+        profilePicture: {
+            type: String, // Will store the URL from Cloudinary or a default
+            default: '/default-avatar.png', 
+        },
+        website: {
+            type: String,
+        },
+        location: {
+            type: String,
+        },
+        github: {
+            type: String,
+        },
         // We will add the 'isVerified' field later for email verification (FR-1.2)
         resetPasswordToken: String,
         resetPasswordExpire: Date,

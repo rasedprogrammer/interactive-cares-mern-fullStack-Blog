@@ -18,7 +18,8 @@ router.post('/login', authUser);
 // .route() allows chaining of different HTTP methods on the same path
 router
     .route('/profile')
-    .get(protect, getUserProfile); // Uses protect middleware
+    .get(protect, getUserProfile) // Uses protect middleware
+    .put(protect, getUserProfile); 
 
 // PUT/DELETE /api/users/:id - Admin actions on a specific user (FR-2.4)
 router

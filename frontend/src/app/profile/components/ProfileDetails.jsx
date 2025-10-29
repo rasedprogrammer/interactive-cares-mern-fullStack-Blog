@@ -114,7 +114,7 @@ const ProfileDetails = () => {
                 {/* Profile Picture Display (Placeholder) */}
                 <div className="flex items-center space-x-4">
                     <img src={formData.profilePicture} alt="Profile" className="w-16 h-16 rounded-full object-cover border-2 border-indigo-300" />
-                    <input type="text" name="profilePicture" value={formData.profilePicture} onChange={handleChange} placeholder="Profile Picture URL" className="flex-grow px-3 py-2 border rounded-md" />
+                    <input type="text" name="profilePicture" value={formData.profilePicture} onChange={handleChange} placeholder="Profile Picture URL" className="grow px-3 py-2 border rounded-md" />
                 </div>
                 
                 {/* Name */}

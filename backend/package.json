@@ -23,18 +23,10 @@
     "mongoose": "^8.19.1",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.10",
-<<<<<<< HEAD
-    "sib-api-v3-sdk": "^8.5.0",
-=======
->>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
     "slugify": "^1.6.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
-<<<<<<< HEAD
-  }
-=======
   },
   "type": "module"
->>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 }

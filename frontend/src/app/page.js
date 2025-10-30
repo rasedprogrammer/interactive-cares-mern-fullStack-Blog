@@ -1,82 +1,93 @@
-// blog-application/frontend/src/app/page.js
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { fetchPosts } from '@/utils/postApi';
-import PostCard from '@/components/PostCard';
-<<<<<<< HEAD
-// import SearchBar from '@/components/SearchBar'; // <-- REMOVE: NOT NEEDED
-=======
-
->>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
-import CategoryList from '@/components/CategoryList';
-// NEW: Import necessary hooks for URL params
-import { useSearchParams } from 'next/navigation'; 
+import { useState, useEffect } from "react";
+import PostCard from "@/components/PostCard";
+import CategoryList from "@/components/CategoryList";
+import { useSearchParams } from "next/navigation";
+import { fetchPosts, getAuthToken } from "@/utils/postApi";
 
 const HomePage = () => {
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    
-    // NEW: Get keyword from URL search parameters
-    const searchParams = useSearchParams();
-    const searchKeyword = searchParams.get('keyword') || ''; // Read keyword from URL
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    // Function to load posts (called on mount and whenever the URL changes)
-    const loadPosts = async (keyword = '') => {
-        setLoading(true);
-        setError(null);
-        try {
-            // Pass the keyword read from the URL
-            const data = await fetchPosts(keyword); 
-            setPosts(data);
-        } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Failed to fetch posts.';
-            setError(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const searchParams = useSearchParams();
+  const searchKeyword = searchParams.get("keyword") || "";
 
-    // CRITICAL FIX: Load posts whenever the URL keyword changes
-    useEffect(() => {
-        // Pass the keyword read from the URL to loadPosts
-        loadPosts(searchKeyword);
-    }, [searchKeyword]); // Dependency is the keyword from the URL
+  // ----------------------------
+  // Fetch posts (token-aware)
+  // ----------------------------
+  const loadPosts = async (keyword = "") => {
+    setLoading(true);
+    setError(null);
 
-    // ... (No need for handleSearch, loadPosts is triggered by useEffect) ...
-    
-    return (
-        <div className="py-10 max-w-6xl mx-auto">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 text-center">
-                {searchKeyword ? `Search Results for: "${searchKeyword}"` : 'Latest Blog Posts'}
-            </h1>
-            
-            <div className="mb-10">
-                <CategoryList /> 
-            </div>
+    try {
+      const data = await fetchPosts(keyword); // fetchPosts automatically uses JWT
+      setPosts(data);
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message || err.message || "Failed to fetch posts.";
+      setError(errorMessage);
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            {loading && <div className="text-center py-12 text-xl font-semibold">Loading Posts...</div>}
-            
-            {/* Display status based on current search */}
-            {!loading && posts.length === 0 && (
-                 <div className="text-center py-12 text-xl text-gray-600">
-                     {searchKeyword 
-                         ? `No posts found matching: "${searchKeyword}"`
-                         : `No published posts found yet. Start writing!`
-                     }
-                 </div>
-            )}
-            
-            {!loading && posts.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {posts.map((post) => (
-                        <PostCard key={post._id} post={post} /> 
-                    ))}
-                </div>
-            )}
+  // ----------------------------
+  // Effect: Run on keyword change OR user login state
+  // ----------------------------
+  useEffect(() => {
+    const token = getAuthToken();
+
+    if (token) {
+      loadPosts(searchKeyword);
+    } else {
+      setLoading(false);
+      setPosts([]);
+      setError("Please login or verify your email to see posts.");
+    }
+  }, [searchKeyword]); // dependency: search keyword
+
+  return (
+    <div className="py-10 max-w-6xl mx-auto">
+      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 text-center">
+        {searchKeyword
+          ? `Search Results for: "${searchKeyword}"`
+          : "Latest Blog Posts"}
+      </h1>
+
+      <div className="mb-10">
+        <CategoryList />
+      </div>
+
+      {loading && (
+        <div className="text-center py-12 text-xl font-semibold">
+          Loading Posts...
         </div>
-    );
+      )}
+
+      {!loading && error && (
+        <div className="text-center py-12 text-xl text-red-500">{error}</div>
+      )}
+
+      {!loading && !error && posts.length === 0 && (
+        <div className="text-center py-12 text-xl text-gray-600">
+          {searchKeyword
+            ? `No posts found matching: "${searchKeyword}"`
+            : `No published posts found yet. Start writing!`}
+        </div>
+      )}
+
+      {!loading && !error && posts.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {posts.map((post) => (
+            <PostCard key={post._id} post={post} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default HomePage;

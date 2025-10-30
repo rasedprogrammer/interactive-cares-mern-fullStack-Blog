@@ -11,6 +11,5 @@ export const transporter = nodemailer.createTransport({
   },
 });
 
-
 // EMAIL_USER=thewesterntoursandtravels@gmail.com
 // EMAIL_PASS=temunxvtsoohrqxj

@@ -1,8 +1,17 @@
 // blog-application/backend/controllers/commentController.js
 
+<<<<<<< HEAD
 const asyncHandler = require('express-async-handler');
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
+=======
+// const asyncHandler = require('express-async-handler');
+// const Comment = require('../models/Comment');
+// const Post = require('../models/Post');
+import asyncHandler from 'express-async-handler';
+import Comment from '../models/Comment.js';
+import Post from '../models/Post.js';
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 // @desc    Create a new comment on a post
 // @route   POST /api/comments
@@ -112,4 +121,8 @@ const getAllCommentsAdmin = asyncHandler(async (req, res) => {
 
 
 
+<<<<<<< HEAD
 module.exports = { createComment, getPostComments, suspendComment, deleteComment, getAllCommentsAdmin };
+=======
+export { createComment, getPostComments, suspendComment, deleteComment, getAllCommentsAdmin };
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

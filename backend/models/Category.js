@@ -1,7 +1,14 @@
 // blog-application/backend/models/Category.js
 
+<<<<<<< HEAD
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+=======
+// const mongoose = require('mongoose');
+// const slugify = require('slugify');
+import mongoose from 'mongoose';
+import slugify from 'slugify';
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 const categorySchema = mongoose.Schema(
     {
@@ -32,4 +39,8 @@ categorySchema.pre('save', function (next) {
 
 const Category = mongoose.model('Category', categorySchema);
 
+<<<<<<< HEAD
 module.exports = Category;
+=======
+export default Category;
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

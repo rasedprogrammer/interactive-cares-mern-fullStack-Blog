@@ -1,8 +1,17 @@
 // blog-application/backend/middleware/authMiddleware.js
 
+<<<<<<< HEAD
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
+=======
+// const jwt = require('jsonwebtoken');
+// const asyncHandler = require('express-async-handler');
+// const User = require('../models/User');
+import jwt from 'jsonwebtoken';
+import asyncHandler from 'express-async-handler';
+import User from '../models/User.js';
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 const protect = asyncHandler(async (req, res, next) => {
     let token;
@@ -54,4 +63,8 @@ const admin = (req, res, next) => {
     }
 };
 
+<<<<<<< HEAD
 module.exports = { protect, admin };
+=======
+export { protect, admin };
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

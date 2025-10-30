@@ -3,17 +3,56 @@
 
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
+<<<<<<< HEAD
 import { deleteUser } from '@/utils/adminApi';
+=======
+import { deleteUser, updateUser } from '@/utils/adminApi';
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 const UserManagement = ({ initialUsers }) => {
     const { userInfo } = useSelector((state) => state.auth);
     const [users, setUsers] = useState(initialUsers);
     const [error, setError] = useState(null);
     const [deleteSuccess, setDeleteSuccess] = useState(null);
+<<<<<<< HEAD
+=======
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentUserToEdit, setCurrentUserToEdit] = useState(null);
+    const [loadingUpdate, setLoadingUpdate] = useState(false); 
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
     // ... (Paste the handleDelete logic and the entire table structure from the old page.jsx here) ...
     // NOTE: The logic should be the same as what was in the original page.jsx, 
     // replacing the local `users` state with `initialUsers` as the starting point.
+<<<<<<< HEAD
+=======
+    const handleUpdate = async (e) => {
+    e.preventDefault();
+    setLoadingUpdate(true);
+    setError(null);
+
+    if (!currentUserToEdit || !currentUserToEdit.role) return;
+
+    try {
+        // Call the existing backend API: PUT /api/users/:id
+        const updatedUserData = await updateUser(currentUserToEdit._id, {
+            name: currentUserToEdit.name,
+            role: currentUserToEdit.role,
+        });
+
+        // Update the local state in the table
+        setUsers(users.map(u => u._id === updatedUserData._id ? updatedUserData : u));
+
+        setIsEditing(false);
+        setCurrentUserToEdit(null);
+        setLoadingUpdate(false);
+        setDeleteSuccess(`User ${updatedUserData.name}'s role updated to ${updatedUserData.role}.`); // Re-use success message
+    } catch (err) {
+        setError(err.response?.data?.message || err.message);
+        setLoadingUpdate(false);
+    }
+};
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
     // --- Delete Handler (FR-2.4) ---
     const handleDelete = async (userId, userName) => {
@@ -64,7 +103,24 @@ const UserManagement = ({ initialUsers }) => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                                     {userInfo._id !== user._id && (
                                         <>
+<<<<<<< HEAD
                                             <button className="text-indigo-600 hover:text-indigo-900">Edit</button>
+=======
+                                            <button 
+                                                onClick={() => {
+                                                    setCurrentUserToEdit({
+                                                        _id: user._id,
+                                                        name: user.name,
+                                                        email: user.email,
+                                                        role: user.role,
+                                                    });
+                                                    setIsEditing(true);
+                                                }}
+                                                className="text-indigo-600 hover:text-indigo-900"
+                                            >
+                                                Edit
+                                            </button>
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
                                             <button 
                                                 onClick={() => handleDelete(user._id, user.name)}
                                                 className="text-red-600 hover:text-red-900"
@@ -79,6 +135,57 @@ const UserManagement = ({ initialUsers }) => {
                     </tbody>
                 </table>
             </div>
+<<<<<<< HEAD
+=======
+            {/* --- EDIT MODAL (RENDERED AT THE BOTTOM) --- */}
+{isEditing && currentUserToEdit && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+        <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">Edit User: {currentUserToEdit.name}</h3>
+            <form onSubmit={handleUpdate} className="space-y-4">
+                
+                {/* Email (Read-Only) */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="text" value={currentUserToEdit.email} readOnly className="w-full px-3 py-2 mt-1 bg-gray-100 rounded-md" />
+                </div>
+                
+                {/* Role Selector */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Change Role</label>
+                    <select
+                        value={currentUserToEdit.role}
+                        onChange={(e) => setCurrentUserToEdit({ ...currentUserToEdit, role: e.target.value })}
+                        className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+                    >
+                        <option value="Regular User">Regular User</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                
+                {/* Buttons */}
+                <div className="flex justify-end space-x-3 pt-2">
+                    <button 
+                        type="button" 
+                        onClick={() => setIsEditing(false)} 
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                        disabled={loadingUpdate}
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        type="submit" 
+                        className="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                        disabled={loadingUpdate}
+                    >
+                        {loadingUpdate ? 'Updating...' : 'Save Changes'}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+)}
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
         </div>
     );
 };

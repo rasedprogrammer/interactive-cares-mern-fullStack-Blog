@@ -1,8 +1,17 @@
 // blog-application/backend/middleware/uploadMiddleware.js
 
+<<<<<<< HEAD
 const multer = require('multer');
 const cloudinary = require('../config/cloudinaryConfig');
 const asyncHandler = require('express-async-handler');
+=======
+// const multer = require('multer');
+// const cloudinary = require('../config/cloudinaryConfig');
+// const asyncHandler = require('express-async-handler');
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import asyncHandler from 'express-async-handler';   
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 // Multer Storage Configuration (we use memory storage to buffer the file)
 const storage = multer.memoryStorage();
@@ -68,4 +77,8 @@ const uploadToCloudinary = asyncHandler(async (req, res, next) => {
     });
 });
 
+<<<<<<< HEAD
 module.exports = { uploadToCloudinary };
+=======
+export  { uploadToCloudinary };
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

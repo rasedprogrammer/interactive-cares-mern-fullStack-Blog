@@ -1,8 +1,17 @@
 // blog-application/backend/controllers/categoryController.js
 
+<<<<<<< HEAD
 const asyncHandler = require('express-async-handler');
 const Category = require('../models/Category');
 const Post = require('../models/Post'); 
+=======
+// const asyncHandler = require('express-async-handler');
+// const Category = require('../models/Category');
+// const Post = require('../models/Post'); 
+import asyncHandler from 'express-async-handler';
+import Category from '../models/Category.js';
+import Post from '../models/Post.js';
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 // @desc    Admin: Create a new category
 // @route   POST /api/categories
@@ -74,4 +83,8 @@ const deleteCategory = asyncHandler(async (req, res) => {
     res.json({ message: 'Category removed' });
 });
 
+<<<<<<< HEAD
 module.exports = { createCategory, getCategories, updateCategory, deleteCategory };
+=======
+export { createCategory, getCategories, updateCategory, deleteCategory };
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

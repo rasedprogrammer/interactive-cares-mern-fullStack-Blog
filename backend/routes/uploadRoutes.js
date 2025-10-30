@@ -1,9 +1,20 @@
 // blog-application/backend/routes/uploadRoutes.js
 
+<<<<<<< HEAD
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const { uploadToCloudinary } = require('../middleware/uploadMiddleware');
+=======
+// const express = require('express');
+// const router = express.Router();
+// const { protect } = require('../middleware/authMiddleware');
+// const { uploadToCloudinary } = require('../middleware/uploadMiddleware');
+import express from 'express';
+const router = express.Router();
+import { protect } from '../middleware/authMiddleware.js';
+import { uploadToCloudinary } from '../middleware/uploadMiddleware.js';
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 // @desc    Secure file upload endpoint
 // @route   POST /api/upload
@@ -25,4 +36,8 @@ router.post(
     }
 );
 
+<<<<<<< HEAD
 module.exports = router;
+=======
+export default router;
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

@@ -1,6 +1,11 @@
 // blog-application/backend/models/Comment.js
 
+<<<<<<< HEAD
 const mongoose = require('mongoose');
+=======
+// const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 const commentSchema = mongoose.Schema(
     {
@@ -31,4 +36,8 @@ const commentSchema = mongoose.Schema(
 
 const Comment = mongoose.model('Comment', commentSchema);
 
+<<<<<<< HEAD
 module.exports = Comment;
+=======
+export default Comment;
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

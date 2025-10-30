@@ -1,6 +1,11 @@
 // blog-application/backend/config/db.js
 
+<<<<<<< HEAD
 const mongoose = require('mongoose');
+=======
+// const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 // Function to connect to MongoDB
 const connectDB = async () => {
@@ -18,4 +23,8 @@ const connectDB = async () => {
 
 };
 
+<<<<<<< HEAD
 module.exports = connectDB;
+=======
+export default connectDB;
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

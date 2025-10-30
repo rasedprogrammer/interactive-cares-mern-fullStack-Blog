@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const express = require('express');
 const router = express.Router();
 const { protect, admin } = require('../middleware/authMiddleware');
@@ -6,6 +7,27 @@ const {
     suspendPost, deletePost, getAllPostsAdmin, getMyPosts,
     updatePost, getPostById, deletePostByUser
 } = require('../controllers/postController');
+=======
+// const express = require('express');
+// const router = express.Router();
+// const { protect, admin } = require('../middleware/authMiddleware');
+// const { 
+//     createPost, getPublishedPosts, getPostBySlug, toggleReaction, 
+//     suspendPost, deletePost, getAllPostsAdmin, getMyPosts,
+//     updatePost, getPostById, deletePostByUser, getPostsByAuthor,
+//     getLatestPosts
+// } = require('../controllers/postController');
+import express from 'express';
+const router = express.Router();
+import { protect, admin } from '../middleware/authMiddleware.js';
+import { 
+    createPost, getPublishedPosts, getPostBySlug, toggleReaction, 
+    suspendPost, deletePost, getAllPostsAdmin, getMyPosts,
+    updatePost, getPostById, deletePostByUser, getPostsByAuthor,
+    getLatestPosts
+} from '../controllers/postController.js';  
+
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 // 1. General/List/Create Routes
 router.route('/')
@@ -25,8 +47,19 @@ router.delete('/admin/:id', protect, admin, deletePost); // DELETE /api/posts/ad
 router.put('/admin/:id/suspend', protect, admin, suspendPost); // PUT /api/posts/admin/:id/suspend
 router.put('/react/:postId', protect, toggleReaction);      // PUT /api/posts/react/:postId
 
+<<<<<<< HEAD
+=======
+// GET /api/posts/author/:id - Public route to list an author's posts
+router.route('/author/:id').get(getPostsByAuthor); 
+router.route('/latest/:excludeId').get(getLatestPosts); 
+
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 // --- 4. PUBLIC SLUG ROUTE (ABSOLUTELY LAST) ---
 router.route('/:slug').get(getPostBySlug); // GET /api/posts/:slug
 
 
+<<<<<<< HEAD
 module.exports = router;
+=======
+export default router;
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

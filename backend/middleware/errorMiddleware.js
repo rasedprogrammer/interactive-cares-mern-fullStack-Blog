@@ -20,4 +20,8 @@ const errorHandler = (err, req, res, next) => {
     });
 };
 
+<<<<<<< HEAD
 module.exports = { notFound, errorHandler };
+=======
+export  { notFound, errorHandler };
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

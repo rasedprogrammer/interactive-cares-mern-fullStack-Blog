@@ -1,6 +1,11 @@
 // blog-application/backend/models/Post.js
 
+<<<<<<< HEAD
 const mongoose = require('mongoose');
+=======
+// const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 
 const postSchema = mongoose.Schema(
     {
@@ -71,4 +76,8 @@ const postSchema = mongoose.Schema(
 
 const Post = mongoose.model('Post', postSchema);
 
+<<<<<<< HEAD
 module.exports = Post;
+=======
+export default Post;
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86

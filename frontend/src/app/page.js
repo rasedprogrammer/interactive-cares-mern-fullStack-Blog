@@ -4,7 +4,11 @@
 import { useState, useEffect } from 'react';
 import { fetchPosts } from '@/utils/postApi';
 import PostCard from '@/components/PostCard';
+<<<<<<< HEAD
 // import SearchBar from '@/components/SearchBar'; // <-- REMOVE: NOT NEEDED
+=======
+
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 import CategoryList from '@/components/CategoryList';
 // NEW: Import necessary hooks for URL params
 import { useSearchParams } from 'next/navigation'; 

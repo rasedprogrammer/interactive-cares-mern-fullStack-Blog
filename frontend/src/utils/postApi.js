@@ -141,4 +141,21 @@ export const deleteMyPostAPI = async (postId) => {
      // DELETE /api/posts/my-posts/:id (This is the new route)
      await axios.delete(`${API_URL}/posts/my-posts/${postId}`, config);
      return 'Post deleted successfully';
+<<<<<<< HEAD
+=======
+};
+
+export const fetchPostsByAuthor = async (authorId) => {
+    // Public route, no token needed
+    const { data } = await axios.get(`${API_URL}/posts/author/${authorId}`); 
+    return data;
+};
+
+
+// Function to fetch the latest posts excluding the current one
+export const fetchLatestPosts = async (excludeId) => {
+    // Public route, no token needed
+    const { data } = await axios.get(`${API_URL}/posts/latest/${excludeId}`); 
+    return data;
+>>>>>>> 6f42eb0e80347aacea666ba624841bb26b06cb86
 };

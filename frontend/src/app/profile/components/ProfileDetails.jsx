@@ -5,68 +5,61 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { getAuthToken } from "@/utils/postApi";
 import { authSuccess } from "@/redux/slices/authSlice";
+import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const ProfileDetails = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-  const [setFullProfile] = useState(null);
+  const router = useRouter();
 
-  // State to manage the form data (FR-2.1)
   const [formData, setFormData] = useState({
-    name: userInfo.name || "",
-    bio: userInfo.bio || "",
-    profilePicture: userInfo.profilePicture || "/default-avatar.png",
-    website: userInfo.website || "",
-    location: userInfo.location || "",
-    github: userInfo.github || "",
+    name: "",
+    bio: "",
+    profilePicture: "/default-avatar.png",
+    website: "",
+    location: "",
+    github: "",
   });
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
+  // Fetch latest profile
   useEffect(() => {
-    // Only run if we have userInfo
-    if (userInfo && userInfo._id) {
-      const fetchLatestProfile = async () => {
-        const token = getAuthToken();
-        if (!token) {
-          // If no token, we can't fetch. Log and return, or redirect.
-          console.error("Authorization Token Missing.");
-          return;
-        }
+    if (!userInfo?._id) return;
 
-        const config = { headers: { Authorization: `Bearer ${token}` } };
+    const fetchProfile = async () => {
+      const token = getAuthToken();
+      if (!token) {
+        console.error("Authorization Token Missing.");
+        router.push("/login?redirect=/profile");
+        return;
+      }
 
-        try {
-          // Hitting the GET /api/users/profile endpoint
-          const { data } = await axios.get(`${API_URL}/users/profile`, config);
+      try {
+        const { data } = await axios.get(`${API_URL}/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-          // Set the latest fetched data
-          setFullProfile(data);
+        setFormData({
+          name: data.name || "",
+          bio: data.bio || "",
+          profilePicture: data.profilePicture || "/default-avatar.png",
+          website: data.website || "",
+          location: data.location || "",
+          github: data.github || "",
+        });
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      }
+    };
 
-          // Use the fetched data to initialize the form
-          setFormData({
-            name: data.name || "",
-            bio: data.bio || "",
-            profilePicture: data.profilePicture || "/default-avatar.png",
-            website: data.website || "",
-            location: data.location || "",
-            github: data.github || "",
-          });
-        } catch (error) {
-          console.error("Failed to fetch latest profile data:", error);
-        }
-      };
+    fetchProfile();
+  }, [userInfo, router]);
 
-      fetchLatestProfile();
-    }
-  }, [userInfo]);
-
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,23 +68,20 @@ const ProfileDetails = () => {
 
     try {
       const token = getAuthToken();
-      const config = {
+      if (!token) {
+        setMessage("Authorization Token Missing. Please login again.");
+        router.push("/login?redirect=/profile");
+        return;
+      }
+
+      const { data } = await axios.put(`${API_URL}/users/profile`, formData, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-      };
+      });
 
-      // PUT request to /api/users/profile
-      const { data } = await axios.put(
-        `${API_URL}/users/profile`,
-        formData,
-        config
-      );
-
-      // Success: Update Redux store (and localStorage) with the new data
       dispatch(authSuccess(data));
-
       setMessage("Profile updated successfully!");
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to update profile.");
@@ -101,11 +91,13 @@ const ProfileDetails = () => {
     }
   };
 
+  if (!userInfo) {
+    return <div className="text-center py-10">Loading Profile...</div>;
+  }
+
   return (
-    <div className="max-w-xl space-y-6">
-      <h2 className="text-2xl font-semibold border-b pb-2">
-        Your Profile (FR-2.1)
-      </h2>
+    <div className="max-w-xl space-y-6 mt-10">
+      <h2 className="text-2xl font-semibold border-b pb-2">Your Profile</h2>
       {message && (
         <div className="p-3 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
           {message}
@@ -113,7 +105,7 @@ const ProfileDetails = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Profile Picture Display (Placeholder) */}
+        {/* Profile Picture */}
         <div className="flex items-center space-x-4">
           <img
             src={formData.profilePicture}
@@ -146,9 +138,7 @@ const ProfileDetails = () => {
 
         {/* Bio */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Bio (Max 500 chars)
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Bio</label>
           <textarea
             name="bio"
             value={formData.bio}
@@ -159,22 +149,19 @@ const ProfileDetails = () => {
           />
         </div>
 
-        {/* Website */}
+        {/* Website / Location / GitHub */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Website/Portfolio URL
+            Website
           </label>
           <input
             type="url"
             name="website"
             value={formData.website}
             onChange={handleChange}
-            placeholder="https://yourwebsite.com"
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
           />
         </div>
-
-        {/* Location */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Location
@@ -187,23 +174,20 @@ const ProfileDetails = () => {
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
           />
         </div>
-
-        {/* GitHub Profile */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            GitHub Profile
+            GitHub
           </label>
           <input
             type="text"
             name="github"
             value={formData.github}
             onChange={handleChange}
-            placeholder="https://github.com/yourusername"
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
           />
         </div>
 
-        {/* Role (Read-Only) */}
+        {/* Role (Read-only) */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Account Role
@@ -212,14 +196,14 @@ const ProfileDetails = () => {
             type="text"
             value={userInfo.role}
             readOnly
-            className="w-full px-3 py-2 mt-1 border border-gray-300 bg-gray-100 rounded-md font-semibold cursor-not-allowed"
+            className="w-full px-3 py-2 mt-1 border border-gray-300 bg-gray-100 rounded-md cursor-not-allowed"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+          className="w-full py-2 px-4 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
         >
           {loading ? "Saving..." : "Update Profile"}
         </button>

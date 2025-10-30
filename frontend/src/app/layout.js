@@ -1,7 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ReduxProvider } from '../redux/Provider';
+import { ReduxProvider } from "../redux/Provider";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: 'Blog Application',
-  description: 'A modern blog platform built with Next.js, Express, and MongoDB.',
+  title: "Blog Application",
+  description:
+    "A modern blog platform built with Next.js, Express, and MongoDB.",
 };
 
 export default function RootLayout({ children }) {
@@ -25,12 +27,13 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReduxProvider>
-        <Header /> 
-          
+          <Header />
+
           {/* Main content wrapper for consistent padding and max width */}
           <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-64px)]">
             {children}
           </main>
+          <Footer />
         </ReduxProvider>
       </body>
     </html>

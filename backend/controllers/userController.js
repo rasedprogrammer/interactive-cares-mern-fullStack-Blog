@@ -1,9 +1,3 @@
-// blog-application/backend/controllers/userController.js
-
-// const asyncHandler = require('express-async-handler'); // Helper for handling async errors
-// const sendEmail = require('../utils/sendEmail');
-// const User = require('../models/User');
-// const jwt = require('jsonwebtoken');
 import asyncHandler from "express-async-handler";
 import sendEmail from "../utils/sendEmail.js";
 import User from "../models/User.js";
@@ -97,6 +91,7 @@ const VerifyEmail = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      profilePicture: user.profilePicture,
       token: jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
         expiresIn: "30d",
       }),
@@ -104,9 +99,6 @@ const VerifyEmail = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Auth user & get token (Login)
-// @route   POST /api/users/login
-// @access  Public
 const authUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -135,63 +127,54 @@ const authUser = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get user profile
-// @route   GET /api/users/profile
-// @access  Private (Requires JWT)
 const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
-  if (user) {
-    if (req.method === "PUT") {
-      // --- PUT (Update) Logic ---
-      user.name = req.body.name || user.name;
-      // NOTE: Changing email is complex (requires re-verification), so we will block it.
-      // user.email = req.body.email || user.email;
-
-      user.bio = req.body.bio || user.bio;
-      user.profilePicture = req.body.profilePicture || user.profilePicture;
-      user.website = req.body.website || user.website;
-      user.location = req.body.location || user.location;
-      user.github = req.body.github || user.github;
-
-      const updatedUser = await user.save();
-
-      // Return updated user data (including new JWT if needed, but we skip for now)
-      return res.json({
-        _id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        bio: updatedUser.bio,
-        profilePicture: updatedUser.profilePicture,
-        website: updatedUser.website,
-        location: updatedUser.location,
-        github: updatedUser.github,
-        // token: generateToken(updatedUser._id), // Optionally generate a new token
-      });
-    }
-
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      bio: user.bio, // <--- ADDED
-      profilePicture: user.profilePicture, // <--- ADDED
-      website: user.website, // <--- ADDED
-      location: user.location, // <--- ADDED
-      github: user.github, // <--- ADDED
-      token: generateToken(user._id),
-    });
-  } else {
+  if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
+
+  if (req.method === "PUT") {
+    user.name = req.body.name || user.name;
+    user.bio = req.body.bio || user.bio;
+    user.profilePicture = req.body.profilePicture || user.profilePicture;
+    user.website = req.body.website || user.website;
+    user.location = req.body.location || user.location;
+    user.github = req.body.github || user.github;
+
+    const updatedUser = await user.save();
+
+    return res.json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      bio: updatedUser.bio,
+      profilePicture: updatedUser.profilePicture,
+      website: updatedUser.website,
+      location: updatedUser.location,
+      github: updatedUser.github,
+      token: generateToken(updatedUser._id),
+      // Optionally: token: generateToken(updatedUser._id)
+    });
+  }
+
+  // GET profile
+  res.status(200).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    bio: user.bio,
+    profilePicture: user.profilePicture,
+    website: user.website,
+    location: user.location,
+    github: user.github,
+    token: generateToken(user._id),
+  });
 });
 
-// @desc    Get all users (Admin panel list)
-// @route   GET /api/users
-// @access  Private/Admin (FR-2.4)
 const getUsers = asyncHandler(async (req, res) => {
   // Only fetch non-password fields
   const users = await User.find({}).select("-password");
@@ -199,9 +182,6 @@ const getUsers = asyncHandler(async (req, res) => {
   res.json(users);
 });
 
-// @desc    Update/Suspend User (Admin action)
-// @route   PUT /api/users/:id
-// @access  Private/Admin (FR-2.4)
 const updateUserByAdmin = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
@@ -211,9 +191,6 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
     user.email = req.body.email || user.email;
     user.role = req.body.role || user.role;
 
-    // Example logic for Suspend: If the Admin passes a 'suspended' field, handle it.
-    // For simplicity, we'll just allow role update for now, which implies control.
-
     const updatedUser = await user.save();
 
     res.json({
@@ -221,6 +198,7 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       role: updatedUser.role,
+      token: generateToken(user._id),
     });
   } else {
     res.status(404);

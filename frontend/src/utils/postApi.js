@@ -1,23 +1,14 @@
 import axios from "axios";
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// ----------------------------
-// Helper to get JWT token
-// ----------------------------
 export const getAuthToken = () => {
   if (typeof window !== "undefined") {
     const userInfo = localStorage.getItem("userInfo");
-    if (userInfo) {
-      return JSON.parse(userInfo).token;
-    }
+    if (userInfo) return JSON.parse(userInfo).token || null;
   }
   return null;
 };
 
-// ----------------------------
-// Axios config with optional token
-// ----------------------------
 const getAuthConfig = () => {
   const token = getAuthToken();
   return token
@@ -27,9 +18,7 @@ const getAuthConfig = () => {
           Authorization: `Bearer ${token}`,
         },
       }
-    : {
-        headers: { "Content-Type": "application/json" },
-      };
+    : { headers: { "Content-Type": "application/json" } };
 };
 
 // ----------------------------
@@ -51,10 +40,8 @@ export const createPost = async (postData) => {
 export const fetchPosts = async (keyword = "", category = "") => {
   let url = `${API_URL}/posts`;
   const params = [];
-
   if (keyword) params.push(`keyword=${encodeURIComponent(keyword)}`);
   if (category) params.push(`category=${encodeURIComponent(category)}`);
-
   if (params.length > 0) url += `?${params.join("&")}`;
 
   const config = getAuthConfig();

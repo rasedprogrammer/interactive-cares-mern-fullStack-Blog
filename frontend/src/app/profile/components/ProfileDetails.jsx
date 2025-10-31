@@ -11,7 +11,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const ProfileDetails = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-  const [setFullProfile] = useState(null);
+  // const [fullProfile, setFullProfile] = useState(null);
 
   // State to manage the form data (FR-2.1)
   const [formData, setFormData] = useState({
@@ -27,12 +27,10 @@ const ProfileDetails = () => {
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
-    // Only run if we have userInfo
     if (userInfo && userInfo._id) {
       const fetchLatestProfile = async () => {
         const token = getAuthToken();
         if (!token) {
-          // If no token, we can't fetch. Log and return, or redirect.
           console.error("Authorization Token Missing.");
           return;
         }
@@ -40,13 +38,9 @@ const ProfileDetails = () => {
         const config = { headers: { Authorization: `Bearer ${token}` } };
 
         try {
-          // Hitting the GET /api/users/profile endpoint
           const { data } = await axios.get(`${API_URL}/users/profile`, config);
 
-          // Set the latest fetched data
-          setFullProfile(data);
-
-          // Use the fetched data to initialize the form
+          // Use the fetched data to directly initialize the form
           setFormData({
             name: data.name || "",
             bio: data.bio || "",
@@ -55,6 +49,7 @@ const ProfileDetails = () => {
             location: data.location || "",
             github: data.github || "",
           });
+
         } catch (error) {
           console.error("Failed to fetch latest profile data:", error);
         }

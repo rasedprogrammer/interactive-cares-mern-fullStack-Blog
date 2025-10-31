@@ -167,7 +167,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
         website: updatedUser.website,
         location: updatedUser.location,
         github: updatedUser.github,
-        // token: generateToken(updatedUser._id), // Optionally generate a new token
+        token: generateToken(updatedUser._id), // Optionally generate a new token
       });
     }
 

@@ -3,6 +3,7 @@ import "./globals.css";
 import { ReduxProvider } from "../redux/Provider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
       >
         <ReduxProvider>
           <Header />
+          <Toaster position="top-right" reverseOrder={false} />
 
           {/* Main content wrapper for consistent padding and max width */}
           <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-64px)]">

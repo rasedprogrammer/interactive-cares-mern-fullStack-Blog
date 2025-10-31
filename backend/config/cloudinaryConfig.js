@@ -1,7 +1,3 @@
-// blog-application/backend/config/cloudinaryConfig.js
-
-// const cloudinary = require('cloudinary').v2;
-// const dotenv = require('dotenv');
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 

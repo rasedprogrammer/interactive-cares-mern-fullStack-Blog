@@ -1,6 +1,3 @@
-// blog-application/frontend/src/app/posts/[slug]/page.jsx
-// NOTE: REMOVE 'use client' - This is now an async Server Component for better SEO and performance.
-
 import { notFound } from "next/navigation";
 import { fetchPostBySlug, fetchLatestPosts } from "@/utils/postApi";
 import SanitizedContent from "@/components/SanitizedContent";

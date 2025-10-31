@@ -61,7 +61,7 @@ const PostCard = ({ post }) => {
           <div className="flex items-center space-x-2">
             <div className="h-6 w-6 rounded-full bg-gray-200 overflow-hidden">
               <img
-                src={post.user?.avatar || "/default-avatar.png"}
+                src={post.user?.profilePicture || "/default-avatar.png"}
                 alt="Author"
                 className="h-full w-full object-cover"
                 onError={(e) => (e.target.src = "/default-avatar.png")}

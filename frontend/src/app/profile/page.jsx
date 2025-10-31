@@ -27,8 +27,6 @@ const ProfilePage = () => {
       <h1 className="text-4xl font-bold mb-6 text-gray-800">
         Welcome, {userInfo.name}
       </h1>
-
-      {/* Only tabs here */}
       <UserDashboardTabs />
     </div>
   );

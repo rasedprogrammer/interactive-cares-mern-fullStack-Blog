@@ -3,8 +3,9 @@ import sendEmail from "../utils/sendEmail.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { sendVerificationEmail } from "../middleware/Email.js";
 import { generateTokenAndSetCookies } from "../middleware/GenerateToken.js";
+import cloudinary from "../config/cloudinaryConfig.js";
+import getDataUri from "../utils/dataUri.js";
 
 // Helper function to generate a JWT (used for both register and login)
 const generateToken = (id) => {
@@ -119,6 +120,7 @@ const authUser = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      profilePicture: user.profilePicture,
       token: generateToken(user._id),
     });
   } else {
@@ -127,51 +129,80 @@ const authUser = asyncHandler(async (req, res) => {
   }
 });
 
+const updateProfile = asyncHandler(async (req, res) => {
+  try {
+    // Find user by ID from middleware
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update text fields if provided
+    const { name, bio, role, website, location, github } = req.body;
+    user.name = name || user.name;
+    user.bio = bio || user.bio;
+    user.role = role || user.role;
+    user.website = website || user.website;
+    user.location = location || user.location;
+    user.github = github || user.github;
+
+    // Handle image upload
+    if (req.file) {
+      const file = getDataUri(req.file);
+      if (!file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      try {
+        const uploadResult = await cloudinary.uploader.upload(file.content);
+        user.profilePicture = uploadResult.secure_url;
+      } catch (err) {
+        console.error("Cloudinary upload failed:", err);
+        return res.status(500).json({ message: "Image upload failed" });
+      }
+    }
+
+    // Save updated user
+    const updatedUser = await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        bio: updatedUser.bio,
+        profilePicture: updatedUser.profilePicture,
+        website: updatedUser.website,
+        location: updatedUser.location,
+        github: updatedUser.github,
+        token: generateToken(updatedUser._id), // refresh token
+      },
+    });
+  } catch (error) {
+    console.error("Update Profile Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+});
+
 const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  console.log("User ID in middleware:", req.user?.id); // debug
+  const user = await User.findById(req.user?._id).select("-password");
 
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
 
-  if (req.method === "PUT") {
-    user.name = req.body.name || user.name;
-    user.bio = req.body.bio || user.bio;
-    user.profilePicture = req.body.profilePicture || user.profilePicture;
-    user.website = req.body.website || user.website;
-    user.location = req.body.location || user.location;
-    user.github = req.body.github || user.github;
-
-    const updatedUser = await user.save();
-
-    return res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      role: updatedUser.role,
-      bio: updatedUser.bio,
-      profilePicture: updatedUser.profilePicture,
-      website: updatedUser.website,
-      location: updatedUser.location,
-      github: updatedUser.github,
-      token: generateToken(updatedUser._id),
-      // Optionally: token: generateToken(updatedUser._id)
-    });
-  }
-
-  // GET profile
   res.status(200).json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    bio: user.bio,
-    profilePicture: user.profilePicture,
-    website: user.website,
-    location: user.location,
-    github: user.github,
-    token: generateToken(user._id),
+    success: true,
+    user,
   });
 });
 
@@ -206,13 +237,9 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete a user (Admin action)
-// @route   DELETE /api/users/:id
-// @access  Private/Admin (FR-2.4)
 const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
-  // Prevent Admin from deleting their own account (Safety Check)
   if (user && user._id.toString() !== req.user._id.toString()) {
     await user.deleteOne();
     res.json({ message: "User removed successfully" });
@@ -225,18 +252,6 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 });
 
-// NOTE: Placeholder function for sending email (replace with actual service later)
-const sendResetEmail = (email, resetUrl) => {
-  console.log(`\n--- EMAIL RESET LINK ---`);
-  console.log(`To: ${email}`);
-  console.log(`Reset URL: ${resetUrl}`);
-  console.log(`--- END EMAIL RESET LINK ---\n`);
-  // In a real app, integrate nodemailer/SendGrid/etc. here
-};
-
-// @desc    Generate password reset token and send email
-// @route   POST /api/users/forgot-password
-// @access  Public (FR-3.1)
 const forgotPassword = asyncHandler(async (req, res) => {
   // 1. FIND THE USER DOCUMENT BY EMAIL
   const user = await User.findOne({ email: req.body.email }); // <--- RESTORED
@@ -296,9 +311,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Reset password using token
-// @route   PUT /api/users/reset-password/:token
-// @access  Public (FR-3.1)
 const resetPassword = asyncHandler(async (req, res) => {
   const { password } = req.body;
   const { token } = req.params;
@@ -339,6 +351,7 @@ export {
   VerifyEmail,
   authUser,
   getUserProfile,
+  updateProfile,
   getUsers,
   updateUserByAdmin,
   deleteUser,

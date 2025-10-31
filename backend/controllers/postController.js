@@ -75,36 +75,47 @@ const createPost = asyncHandler(async (req, res) => {
 // @route   GET /api/posts
 // @access  Public (FR-6.1: Accessible by guest users)
 const getPublishedPosts = asyncHandler(async (req, res) => {
-  // 1. Get filters from query string
-  const { keyword, category } = req.query; // 'category' is the slug from the frontend
-  let filter = { status: "Published" };
+  const { keyword, category, page = 1, limit = 6 } = req.query;
+
+  let filter = { status: 'Published' };
 
   if (keyword) {
-    filter.title = { $regex: keyword, $options: "i" };
+    filter.title = { $regex: keyword, $options: 'i' };
   }
 
-  // 2. FIX: Convert the category slug back to the stored name
   if (category) {
-    // Find the category object by the SLUG
     const categoryDoc = await Category.findOne({ slug: category });
-
     if (categoryDoc) {
-      // Use the exact Category NAME for the post filter
       filter.category = categoryDoc.name;
     } else {
-      // If the slug doesn't exist, return an empty array (no posts match)
-      res.json([]);
-      return;
+      return res.json({ posts: [], page: 1, totalPages: 0, totalPosts: 0 });
     }
   }
 
-  // 3. Find posts with the combined filter
-  const posts = await Post.find(filter)
-    .populate("user", "name profilePicture bio")
-    .sort({ createdAt: -1 });
+  // Convert to numbers
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
 
-  res.json(posts);
+  // Count total matching posts
+  const totalPosts = await Post.countDocuments(filter);
+
+  // Fetch only one page of posts
+  const posts = await Post.find(filter)
+    .populate('user', 'name profilePicture bio')
+    .sort({ createdAt: -1 })
+    .skip((pageNumber - 1) * limitNumber)
+    .limit(limitNumber);
+
+  const totalPages = Math.ceil(totalPosts / limitNumber);
+
+  res.json({
+    posts,
+    page: pageNumber,
+    totalPages,
+    totalPosts,
+  });
 });
+
 
 // @desc    Fetch a single post by slug
 // @route   GET /api/posts/:slug

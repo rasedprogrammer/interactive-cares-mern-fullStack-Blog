@@ -48,18 +48,20 @@ export const createPost = async (postData) => {
 // ----------------------------
 // FETCH POSTS (Protected route with optional token)
 // ----------------------------
-export const fetchPosts = async (keyword = "", category = "") => {
-  let url = `${API_URL}/posts`;
-  const params = [];
+export const fetchPosts = async (keyword = '', category = '', page = 1, limit = 6) => {
+  try {
+    const query = new URLSearchParams();
 
-  if (keyword) params.push(`keyword=${encodeURIComponent(keyword)}`);
-  if (category) params.push(`category=${encodeURIComponent(category)}`);
+    if (keyword) query.append('keyword', keyword);
+    if (category) query.append('category', category);
+    query.append('page', page);
+    query.append('limit', limit);
 
-  if (params.length > 0) url += `?${params.join("&")}`;
-
-  const config = getAuthConfig();
-  const { data } = await axios.get(url, config);
-  return data;
+    const { data } = await axios.get(`${API_URL}/posts?${query.toString()}`);
+    return data; // returns { posts, page, totalPages, totalPosts }
+  } catch (error) {
+    throw error;
+  }
 };
 
 // ----------------------------

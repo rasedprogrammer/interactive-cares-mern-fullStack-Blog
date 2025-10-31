@@ -3,131 +3,124 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 import { getAuthToken } from "@/utils/postApi";
 import { authSuccess } from "@/redux/slices/authSlice";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const ProfileDetails = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-  const [setFullProfile] = useState(null);
 
-  // State to manage the form data (FR-2.1)
   const [formData, setFormData] = useState({
-    name: userInfo.name || "",
-    bio: userInfo.bio || "",
-    profilePicture: userInfo.profilePicture || "/default-avatar.png",
-    website: userInfo.website || "",
-    location: userInfo.location || "",
-    github: userInfo.github || "",
+    name: "",
+    bio: "",
+    website: "",
+    location: "",
+    github: "",
+    image: null, // for file upload
   });
 
+  const [photoPreview, setPhotoPreview] = useState("/default-avatar.png");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
+
+  const token = getAuthToken();
 
   useEffect(() => {
-    // Only run if we have userInfo
-    if (userInfo && userInfo._id) {
-      const fetchLatestProfile = async () => {
-        const token = getAuthToken();
-        if (!token) {
-          // If no token, we can't fetch. Log and return, or redirect.
-          console.error("Authorization Token Missing.");
-          return;
-        }
+    if (!userInfo?._id || !token) return;
 
-        const config = { headers: { Authorization: `Bearer ${token}` } };
+    const fetchProfile = async () => {
+      try {
+        const { data } = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/profile/me`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-        try {
-          // Hitting the GET /api/users/profile endpoint
-          const { data } = await axios.get(`${API_URL}/users/profile`, config);
+        setFormData((prev) => ({
+          ...prev,
+          name: data.user.name || "",
+          bio: data.user.bio || "",
+          website: data.user.website || "",
+          location: data.user.location || "",
+          github: data.user.github || "",
+        }));
 
-          // Set the latest fetched data
-          setFullProfile(data);
+        setPhotoPreview(data.user.profilePicture || "/default-avatar.png");
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+        toast.error("Failed to load profile");
+      }
+    };
 
-          // Use the fetched data to initialize the form
-          setFormData({
-            name: data.name || "",
-            bio: data.bio || "",
-            profilePicture: data.profilePicture || "/default-avatar.png",
-            website: data.website || "",
-            location: data.location || "",
-            github: data.github || "",
-          });
-        } catch (error) {
-          console.error("Failed to fetch latest profile data:", error);
-        }
-      };
-
-      fetchLatestProfile();
-    }
-  }, [userInfo]);
+    fetchProfile();
+  }, [userInfo, token]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, image: file });
+      setPhotoPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(null);
     setLoading(true);
 
     try {
-      const token = getAuthToken();
-      const config = {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      };
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("bio", formData.bio);
+      data.append("website", formData.website);
+      data.append("location", formData.location);
+      data.append("github", formData.github);
 
-      // PUT request to /api/users/profile
-      const { data } = await axios.put(
-        `${API_URL}/users/profile`,
-        formData,
-        config
+      if (formData.image) data.append("image", formData.image); // must match multer field
+
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/profile-update`,
+        data,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      // Success: Update Redux store (and localStorage) with the new data
-      dispatch(authSuccess(data));
-
-      setMessage("Profile updated successfully!");
+      if (res.data?.success) {
+        toast.success(res.data.message || "Profile updated successfully!");
+        dispatch(authSuccess(res.data.user));
+      } else {
+        toast.error("Profile update failed!");
+      }
     } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to update profile.");
+      console.error("Profile update failed:", error);
+      toast.error(error.response?.data?.message || "Profile update failed!");
     } finally {
       setLoading(false);
-      setTimeout(() => setMessage(null), 3000);
     }
   };
 
+  if (!userInfo) return <div className="text-center py-10">Loading...</div>;
+
   return (
-    <div className="max-w-xl space-y-6">
-      <h2 className="text-2xl font-semibold border-b pb-2">
-        Your Profile (FR-2.1)
-      </h2>
-      {message && (
-        <div className="p-3 text-sm text-yellow-700 bg-yellow-100 rounded-lg">
-          {message}
-        </div>
-      )}
+    <div className="max-w-xl mx-auto mt-10 space-y-6">
+      <h2 className="text-2xl font-semibold border-b pb-2">Your Profile</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Profile Picture Display (Placeholder) */}
+        {/* Profile Image */}
         <div className="flex items-center space-x-4">
           <img
-            src={formData.profilePicture}
+            src={photoPreview}
             alt="Profile"
             className="w-16 h-16 rounded-full object-cover border-2 border-indigo-300"
           />
-          <input
-            type="text"
-            name="profilePicture"
-            value={formData.profilePicture}
-            onChange={handleChange}
-            placeholder="Profile Picture URL"
-            className="grow px-3 py-2 border rounded-md"
-          />
+          <input type="file" accept="image/*" onChange={handleImageChange} />
         </div>
 
         {/* Name */}
@@ -146,9 +139,7 @@ const ProfileDetails = () => {
 
         {/* Bio */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Bio (Max 500 chars)
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Bio</label>
           <textarea
             name="bio"
             value={formData.bio}
@@ -159,51 +150,23 @@ const ProfileDetails = () => {
           />
         </div>
 
-        {/* Website */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Website/Portfolio URL
-          </label>
-          <input
-            type="url"
-            name="website"
-            value={formData.website}
-            onChange={handleChange}
-            placeholder="https://yourwebsite.com"
-            className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-          />
-        </div>
+        {/* Website / Location / GitHub */}
+        {["website", "location", "github"].map((field) => (
+          <div key={field}>
+            <label className="block text-sm font-medium text-gray-700">
+              {field.charAt(0).toUpperCase() + field.slice(1)}
+            </label>
+            <input
+              type={field === "website" ? "url" : "text"}
+              name={field}
+              value={formData[field]}
+              onChange={handleChange}
+              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+            />
+          </div>
+        ))}
 
-        {/* Location */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Location
-          </label>
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-          />
-        </div>
-
-        {/* GitHub Profile */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            GitHub Profile
-          </label>
-          <input
-            type="text"
-            name="github"
-            value={formData.github}
-            onChange={handleChange}
-            placeholder="https://github.com/yourusername"
-            className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-          />
-        </div>
-
-        {/* Role (Read-Only) */}
+        {/* Role (read-only) */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Account Role
@@ -212,14 +175,14 @@ const ProfileDetails = () => {
             type="text"
             value={userInfo.role}
             readOnly
-            className="w-full px-3 py-2 mt-1 border border-gray-300 bg-gray-100 rounded-md font-semibold cursor-not-allowed"
+            className="w-full px-3 py-2 mt-1 border border-gray-300 bg-gray-100 rounded-md cursor-not-allowed"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+          className="w-full py-2 px-4 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
         >
           {loading ? "Saving..." : "Update Profile"}
         </button>

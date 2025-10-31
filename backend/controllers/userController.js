@@ -1,16 +1,11 @@
-// blog-application/backend/controllers/userController.js
-
-// const asyncHandler = require('express-async-handler'); // Helper for handling async errors
-// const sendEmail = require('../utils/sendEmail');
-// const User = require('../models/User');
-// const jwt = require('jsonwebtoken');
 import asyncHandler from "express-async-handler";
 import sendEmail from "../utils/sendEmail.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { sendVerificationEmail } from "../middleware/Email.js";
 import { generateTokenAndSetCookies } from "../middleware/GenerateToken.js";
+import cloudinary from "../config/cloudinaryConfig.js";
+import getDataUri from "../utils/dataUri.js";
 
 // Helper function to generate a JWT (used for both register and login)
 const generateToken = (id) => {
@@ -97,6 +92,7 @@ const VerifyEmail = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      profilePicture: user.profilePicture,
       token: jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
         expiresIn: "30d",
       }),
@@ -104,9 +100,6 @@ const VerifyEmail = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Auth user & get token (Login)
-// @route   POST /api/users/login
-// @access  Public
 const authUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -127,6 +120,7 @@ const authUser = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      profilePicture: user.profilePicture,
       token: generateToken(user._id),
     });
   } else {
@@ -135,29 +129,46 @@ const authUser = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get user profile
-// @route   GET /api/users/profile
-// @access  Private (Requires JWT)
-const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+const updateProfile = asyncHandler(async (req, res) => {
+  try {
+    // Find user by ID from middleware
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-  if (user) {
-    if (req.method === "PUT") {
-      // --- PUT (Update) Logic ---
-      user.name = req.body.name || user.name;
-      // NOTE: Changing email is complex (requires re-verification), so we will block it.
-      // user.email = req.body.email || user.email;
+    // Update text fields if provided
+    const { name, bio, role, website, location, github } = req.body;
+    user.name = name || user.name;
+    user.bio = bio || user.bio;
+    user.role = role || user.role;
+    user.website = website || user.website;
+    user.location = location || user.location;
+    user.github = github || user.github;
 
-      user.bio = req.body.bio || user.bio;
-      user.profilePicture = req.body.profilePicture || user.profilePicture;
-      user.website = req.body.website || user.website;
-      user.location = req.body.location || user.location;
-      user.github = req.body.github || user.github;
+    // Handle image upload
+    if (req.file) {
+      const file = getDataUri(req.file);
+      if (!file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
 
-      const updatedUser = await user.save();
+      try {
+        const uploadResult = await cloudinary.uploader.upload(file.content);
+        user.profilePicture = uploadResult.secure_url;
+      } catch (err) {
+        console.error("Cloudinary upload failed:", err);
+        return res.status(500).json({ message: "Image upload failed" });
+      }
+    }
 
-      // Return updated user data (including new JWT if needed, but we skip for now)
-      return res.json({
+    // Save updated user
+    const updatedUser = await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
         _id: updatedUser._id,
         name: updatedUser.name,
         email: updatedUser.email,
@@ -167,31 +178,34 @@ const getUserProfile = asyncHandler(async (req, res) => {
         website: updatedUser.website,
         location: updatedUser.location,
         github: updatedUser.github,
-        // token: generateToken(updatedUser._id), // Optionally generate a new token
-      });
-    }
-
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      bio: user.bio, // <--- ADDED
-      profilePicture: user.profilePicture, // <--- ADDED
-      website: user.website, // <--- ADDED
-      location: user.location, // <--- ADDED
-      github: user.github, // <--- ADDED
-      token: generateToken(user._id),
+        token: generateToken(updatedUser._id), // refresh token
+      },
     });
-  } else {
-    res.status(404);
-    throw new Error("User not found");
+  } catch (error) {
+    console.error("Update Profile Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 });
 
-// @desc    Get all users (Admin panel list)
-// @route   GET /api/users
-// @access  Private/Admin (FR-2.4)
+const getUserProfile = asyncHandler(async (req, res) => {
+  console.log("User ID in middleware:", req.user?.id); // debug
+  const user = await User.findById(req.user?._id).select("-password");
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
 const getUsers = asyncHandler(async (req, res) => {
   // Only fetch non-password fields
   const users = await User.find({}).select("-password");
@@ -199,9 +213,6 @@ const getUsers = asyncHandler(async (req, res) => {
   res.json(users);
 });
 
-// @desc    Update/Suspend User (Admin action)
-// @route   PUT /api/users/:id
-// @access  Private/Admin (FR-2.4)
 const updateUserByAdmin = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
@@ -211,9 +222,6 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
     user.email = req.body.email || user.email;
     user.role = req.body.role || user.role;
 
-    // Example logic for Suspend: If the Admin passes a 'suspended' field, handle it.
-    // For simplicity, we'll just allow role update for now, which implies control.
-
     const updatedUser = await user.save();
 
     res.json({
@@ -221,6 +229,7 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       role: updatedUser.role,
+      token: generateToken(user._id),
     });
   } else {
     res.status(404);
@@ -228,13 +237,9 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete a user (Admin action)
-// @route   DELETE /api/users/:id
-// @access  Private/Admin (FR-2.4)
 const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
-  // Prevent Admin from deleting their own account (Safety Check)
   if (user && user._id.toString() !== req.user._id.toString()) {
     await user.deleteOne();
     res.json({ message: "User removed successfully" });
@@ -247,18 +252,6 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 });
 
-// NOTE: Placeholder function for sending email (replace with actual service later)
-const sendResetEmail = (email, resetUrl) => {
-  console.log(`\n--- EMAIL RESET LINK ---`);
-  console.log(`To: ${email}`);
-  console.log(`Reset URL: ${resetUrl}`);
-  console.log(`--- END EMAIL RESET LINK ---\n`);
-  // In a real app, integrate nodemailer/SendGrid/etc. here
-};
-
-// @desc    Generate password reset token and send email
-// @route   POST /api/users/forgot-password
-// @access  Public (FR-3.1)
 const forgotPassword = asyncHandler(async (req, res) => {
   // 1. FIND THE USER DOCUMENT BY EMAIL
   const user = await User.findOne({ email: req.body.email }); // <--- RESTORED
@@ -318,9 +311,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Reset password using token
-// @route   PUT /api/users/reset-password/:token
-// @access  Public (FR-3.1)
 const resetPassword = asyncHandler(async (req, res) => {
   const { password } = req.body;
   const { token } = req.params;
@@ -361,6 +351,7 @@ export {
   VerifyEmail,
   authUser,
   getUserProfile,
+  updateProfile,
   getUsers,
   updateUserByAdmin,
   deleteUser,

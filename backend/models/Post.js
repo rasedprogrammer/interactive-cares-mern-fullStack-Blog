@@ -17,7 +17,6 @@ const postSchema = mongoose.Schema(
       trim: true,
     },
     slug: {
-      // FR-3.5: SEO-friendly URL
       type: String,
       required: true,
       unique: true,
@@ -50,28 +49,24 @@ const postSchema = mongoose.Schema(
       },
     ],
     featuredImage: {
-      // FR-3.3: Post Thumbnail
       type: String,
       required: true, // Will be a URL to the image file
     },
     status: {
-      // FR-3.4: Draft or Published (and Suspended by Admin)
       type: String,
       enum: ["Draft", "Published", "Suspended"],
       default: "Draft",
     },
     metaTitle: {
-      // FR-6.4: Optional SEO field
       type: String,
     },
     metaDescription: {
-      // FR-6.4: Optional SEO field
       type: String,
     },
     // We will add likeCount, dislikeCount, and commentCount fields later
   },
   {
-    timestamps: true, // createdAt and updatedAt (FR-3.9: Publish Date)
+    timestamps: true,
   }
 );
 

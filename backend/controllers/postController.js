@@ -1,21 +1,9 @@
-// blog-application/backend/controllers/postController.js
-
-// const asyncHandler = require('express-async-handler');
-// const slugify = require('slugify'); // FR-3.5: For generating URL slugs
-// const Post = require('../models/Post');
-// const Comment = require('../models/Comment');
-// const Category = require('../models/Category');
 import asyncHandler from "express-async-handler";
-import slugify from "slugify"; // FR-3.5: For generating URL slugs
+import slugify from "slugify";
 import Post from "../models/Post.js";
 import Comment from "../models/Comment.js";
 import Category from "../models/Category.js";
-// const Category = require('../models/Category');
-// const User = require('../models/User'); // Not needed if we trust req.user
 
-// @desc    Create a new blog post
-// @route   POST /api/posts
-// @access  Private (Regular User)
 const createPost = asyncHandler(async (req, res) => {
   // req.user is populated by the `protect` middleware
   const {
@@ -37,12 +25,11 @@ const createPost = asyncHandler(async (req, res) => {
     );
   }
 
-  // 1. Generate the URL slug (FR-3.5)
   // Use slugify, convert to lowercase, and allow only basic characters
   let postSlug = slugify(title, { lower: true, strict: true });
 
   // 2. Check if a post with this slug already exists (for uniqueness)
-  // If it exists, append a number (e.g., -2, -3)
+  // If it exists, append a number
   let slugExists = await Post.findOne({ slug: postSlug });
   let counter = 1;
   while (slugExists) {
@@ -53,27 +40,22 @@ const createPost = asyncHandler(async (req, res) => {
 
   // 3. Create the post
   const post = new Post({
-    user: req.user._id, // Set the author to the logged-in user
-    title,
+    user: req.user._id,
     slug: postSlug,
     content,
     category,
-    tags: tags || [], // Ensure tags is an array
+    tags: tags || [],
     featuredImage,
-    status: status || "Draft", // Default to Draft (FR-3.4)
+    status: status || "Draft",
     metaTitle,
     metaDescription,
   });
 
   const createdPost = await post.save();
 
-  // FR-3.3: Post successfully created
   res.status(201).json(createdPost);
 });
 
-// @desc    Fetch all published posts & filter by keyword/category
-// @route   GET /api/posts
-// @access  Public (FR-6.1: Accessible by guest users)
 const getPublishedPosts = asyncHandler(async (req, res) => {
   const { keyword, category, page = 1, limit = 6 } = req.query;
 
@@ -116,10 +98,6 @@ const getPublishedPosts = asyncHandler(async (req, res) => {
   });
 });
 
-
-// @desc    Fetch a single post by slug
-// @route   GET /api/posts/:slug
-// @access  Public (FR-6.1: Accessible by guest users)
 const getPostBySlug = asyncHandler(async (req, res) => {
   // Find the post by the slug from the URL parameters
   const post = await Post.findOne({ slug: req.params.slug }).populate(
@@ -142,11 +120,8 @@ const getPostBySlug = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Toggle a Like/Dislike reaction on a post
-// @route   PUT /api/posts/:id/react
-// @access  Private (Regular User)
 const toggleReaction = asyncHandler(async (req, res) => {
-  const { postId } = req.params; // We'll use ID here for simplicity
+  const { postId } = req.params;
   const { action } = req.body; // 'like' or 'dislike'
   const userId = req.user._id;
 
@@ -165,7 +140,6 @@ const toggleReaction = asyncHandler(async (req, res) => {
       // Remove like
       post.likes.pull(userId);
     } else {
-      // Add like (FR-4.2)
       post.likes.push(userId);
       // If the user previously disliked, remove the dislike
       if (isDisliked) {
@@ -177,7 +151,6 @@ const toggleReaction = asyncHandler(async (req, res) => {
       // Remove dislike
       post.dislikes.pull(userId);
     } else {
-      // Add dislike (FR-4.2)
       post.dislikes.push(userId);
       // If the user previously liked, remove the like
       if (isLiked) {
@@ -191,16 +164,12 @@ const toggleReaction = asyncHandler(async (req, res) => {
 
   const updatedPost = await post.save();
 
-  // FR-3.3: Return the new reaction counts
   res.json({
     likes: updatedPost.likes.length,
     dislikes: updatedPost.dislikes.length,
   });
 });
 
-// @desc    Admin: Suspend a post (FR-3.3)
-// @route   PUT /api/posts/:id/suspend
-// @access  Private/Admin
 const suspendPost = asyncHandler(async (req, res) => {
   const post = await Post.findById(req.params.id);
 
@@ -228,9 +197,6 @@ const suspendPost = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Admin: Delete a post (FR-3.3)
-// @route   DELETE /api/posts/:id
-// @access  Private/Admin
 const deletePost = asyncHandler(async (req, res) => {
   const postId = req.params.id;
   const post = await Post.findById(postId);
@@ -249,9 +215,6 @@ const deletePost = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Admin: Fetch ALL posts (including Drafts/Suspended)
-// @route   GET /api/posts/all
-// @access  Private/Admin
 const getAllPostsAdmin = asyncHandler(async (req, res) => {
   // Return all posts, populate author name
   const posts = await Post.find({})
@@ -260,9 +223,6 @@ const getAllPostsAdmin = asyncHandler(async (req, res) => {
   res.json(posts);
 });
 
-// @desc    Fetch posts authored by the logged-in user
-// @route   GET /api/posts/my-posts
-// @access  Private (Regular User)
 const getMyPosts = asyncHandler(async (req, res) => {
   // req.user is populated by the protect middleware
   const posts = await Post.find({ user: req.user._id }) // Filter by logged-in user's ID
@@ -271,9 +231,6 @@ const getMyPosts = asyncHandler(async (req, res) => {
   res.json(posts);
 });
 
-// @desc    Update a post (Used by Post Author)
-// @route   PUT /api/posts/:id
-// @access  Private (Author Only)
 const updatePost = asyncHandler(async (req, res) => {
   const postId = req.params.id;
   const {
@@ -341,9 +298,6 @@ const updatePost = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Fetch a single post by ID (Protected for Author/Admin)
-// @route   GET /api/posts/:id
-// @access  Private (Author/Admin)
 const getPostById = asyncHandler(async (req, res) => {
   const post = await Post.findById(req.params.id).populate(
     "user",
@@ -368,9 +322,6 @@ const getPostById = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete a post (User/Author action)
-// @route   DELETE /api/posts/my-posts/:id
-// @access  Private (Author Only)
 const deletePostByUser = asyncHandler(async (req, res) => {
   const postId = req.params.id;
   const post = await Post.findById(postId);
@@ -394,9 +345,6 @@ const deletePostByUser = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Fetch all published posts by a specific user ID
-// @route   GET /api/posts/author/:id
-// @access  Public
 const getPostsByAuthor = asyncHandler(async (req, res) => {
   const authorId = req.params.id;
 
@@ -411,9 +359,6 @@ const getPostsByAuthor = asyncHandler(async (req, res) => {
   res.json(posts);
 });
 
-// @desc    Fetch latest published posts (max 5), excluding a given ID
-// @route   GET /api/posts/latest/:excludeId
-// @access  Public
 const getLatestPosts = asyncHandler(async (req, res) => {
   const excludeId = req.params.excludeId;
 

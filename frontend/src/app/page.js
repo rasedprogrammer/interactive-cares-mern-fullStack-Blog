@@ -22,7 +22,8 @@ const HomePage = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const searchParams = useSearchParams();
-  const searchKeyword = searchParams.get("keyword") || "";
+  const searchKeyword = searchParams.get('keyword') || '';
+  const category = searchParams.get('category') || '';
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -62,7 +63,7 @@ const HomePage = () => {
   return (
     <div className="max-w-7xl mx-auto">
       {/* ===== HERO / BANNER ===== */}
-      <section className="relative bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-20 rounded-3xl shadow-xl mt-8 mx-4">
+      <section className="relative bg-linear-to-r from-indigo-600 to-purple-700 text-white py-20 rounded-3xl shadow-xl mt-8 mx-4">
         <div className="text-center px-6 md:px-12">
           <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
             Welcome to <span className="text-yellow-300">YourBlog</span>

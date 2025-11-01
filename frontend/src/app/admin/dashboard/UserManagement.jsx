@@ -1,4 +1,3 @@
-// blog-application/frontend/src/app/admin/dashboard/UserManagement.jsx
 "use client";
 
 import { useState } from "react";
@@ -14,7 +13,6 @@ const UserManagement = ({ initialUsers }) => {
   const [currentUserToEdit, setCurrentUserToEdit] = useState(null);
   const [loadingUpdate, setLoadingUpdate] = useState(false);
 
-  // ... (Paste the handleDelete logic and the entire table structure from the old page.jsx here) ...
   // NOTE: The logic should be the same as what was in the original page.jsx,
   // replacing the local `users` state with `initialUsers` as the starting point.
   const handleUpdate = async (e) => {
@@ -131,7 +129,7 @@ const UserManagement = ({ initialUsers }) => {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  {userInfo._id !== user._id && (
+                  {userInfo?._id !== user._id && (
                     <>
                       <button
                         onClick={() => {

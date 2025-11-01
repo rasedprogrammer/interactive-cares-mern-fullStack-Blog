@@ -22,10 +22,6 @@ const RegisterPage = () => {
     (state) => state.auth
   );
 
-  useEffect(() => {
-    if (userInfo) router.push("/"); // Verified users go home
-  }, [userInfo, router]);
-
   const submitHandler = async (e) => {
     e.preventDefault();
     if (!name || !email || !password) {

@@ -9,7 +9,6 @@ import SearchBarComponent from "./SearchBarComponent";
 
 const Header = () => {
   const { userInfo } = useSelector((state) => state.auth);
-  console.log(userInfo);
 
   const dispatch = useDispatch();
   const router = useRouter();

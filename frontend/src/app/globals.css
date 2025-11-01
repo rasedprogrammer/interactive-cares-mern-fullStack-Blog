@@ -11,20 +11,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-
-
 
 /* Header Styles */
 
@@ -54,14 +45,13 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #6B7280;
+  background: #6b7280;
   border-radius: 2px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF;
+  background: #9ca3af;
 }
-
 
 /* TipTap Editor Base Styles */
 .ProseMirror {
@@ -101,7 +91,7 @@ body {
   background-color: #f3f4f6;
   padding: 0.25rem 0.5rem;
   border-radius: 0.375rem;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   font-size: 0.875rem;
   color: #1f2937;
 }
@@ -122,7 +112,8 @@ body {
   font-size: 0.875rem;
 }
 
-.ProseMirror ul, .ProseMirror ol {
+.ProseMirror ul,
+.ProseMirror ol {
   padding-left: 1.5rem;
   margin: 1rem 0;
 }
@@ -201,7 +192,8 @@ body {
   width: 100%;
 }
 
-.ProseMirror table td, .ProseMirror table th {
+.ProseMirror table td,
+.ProseMirror table th {
   border: 1px solid #e5e7eb;
   padding: 0.5rem;
   text-align: left;
@@ -244,7 +236,8 @@ body {
   font-size: 1.125rem;
 }
 
-.post-content ul, .post-content ol {
+.post-content ul,
+.post-content ol {
   margin-bottom: 1rem;
   padding-left: 1.5rem;
 }
@@ -272,7 +265,7 @@ body {
   background-color: #f3f4f6;
   padding: 0.25rem 0.5rem;
   border-radius: 0.375rem;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   font-size: 0.875rem;
   color: #1f2937;
 }
@@ -316,7 +309,8 @@ body {
   overflow: hidden;
 }
 
-.ProseMirror table td, .ProseMirror table th {
+.ProseMirror table td,
+.ProseMirror table th {
   border: 1px solid #e5e7eb;
   padding: 0.5rem;
   text-align: left;
@@ -335,7 +329,7 @@ body {
 
 /* Highlight Styles */
 .ProseMirror mark {
-  background-color: #FAF594;
+  background-color: #faf594;
   padding: 0.1rem 0.2rem;
   border-radius: 0.25rem;
 }
@@ -418,7 +412,7 @@ body {
   .ProseMirror {
     padding: 0.5rem;
   }
-  
+
   .toolbar-group {
     flex-wrap: wrap;
   }

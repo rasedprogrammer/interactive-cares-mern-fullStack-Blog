@@ -1,23 +1,14 @@
 import axios from "axios";
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// ----------------------------
-// Helper to get JWT token
-// ----------------------------
 export const getAuthToken = () => {
   if (typeof window !== "undefined") {
     const userInfo = localStorage.getItem("userInfo");
-    if (userInfo) {
-      return JSON.parse(userInfo).token;
-    }
+    if (userInfo) return JSON.parse(userInfo).token || null;
   }
   return null;
 };
 
-// ----------------------------
-// Axios config with optional token
-// ----------------------------
 const getAuthConfig = () => {
   const token = getAuthToken();
   return token
@@ -27,9 +18,7 @@ const getAuthConfig = () => {
           Authorization: `Bearer ${token}`,
         },
       }
-    : {
-        headers: { "Content-Type": "application/json" },
-      };
+    : { headers: { "Content-Type": "application/json" } };
 };
 
 // ----------------------------
@@ -48,20 +37,16 @@ export const createPost = async (postData) => {
 // ----------------------------
 // FETCH POSTS (Protected route with optional token)
 // ----------------------------
-export const fetchPosts = async (keyword = '', category = '', page = 1, limit = 6) => {
-  try {
-    const query = new URLSearchParams();
+export const fetchPosts = async (keyword = "", category = "") => {
+  let url = `${API_URL}/posts`;
+  const params = [];
+  if (keyword) params.push(`keyword=${encodeURIComponent(keyword)}`);
+  if (category) params.push(`category=${encodeURIComponent(category)}`);
+  if (params.length > 0) url += `?${params.join("&")}`;
 
-    if (keyword) query.append('keyword', keyword);
-    if (category) query.append('category', category);
-    query.append('page', page);
-    query.append('limit', limit);
-
-    const { data } = await axios.get(`${API_URL}/posts?${query.toString()}`);
-    return data; // returns { posts, page, totalPages, totalPosts }
-  } catch (error) {
-    throw error;
-  }
+  const config = getAuthConfig();
+  const { data } = await axios.get(url, config);
+  return data;
 };
 
 // ----------------------------

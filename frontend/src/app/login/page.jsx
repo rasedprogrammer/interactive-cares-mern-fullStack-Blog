@@ -17,14 +17,11 @@ const LoginPage = () => {
 
   const router = useRouter();
   const dispatch = useDispatch();
-
-  // Get state from Redux
   const { loading, error, userInfo } = useSelector((state) => state.auth);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (userInfo) {
-      router.push("/"); // Redirect to homepage
+      router.push("/"); // Redirect after login
     }
   }, [userInfo, router]);
 
@@ -39,23 +36,26 @@ const LoginPage = () => {
     dispatch(authRequest());
 
     try {
-      // Call the backend API
       const userData = await login(email, password);
 
-      // Dispatch success to Redux (saves token/info to local storage)
-      dispatch(authSuccess(userData));
-
-      // Redirect happens via the useEffect hook
+      if (userData?.isVerified === false) {
+        // Redirect to verification page if not verified
+        router.push(
+          `/verify-email?email=${encodeURIComponent(userData.email)}`
+        );
+        dispatch(authSuccess(null)); // Do not auto-login
+      } else {
+        dispatch(authSuccess(userData)); // Save token & user
+      }
     } catch (err) {
-      // Error message from backend (e.g., 'Invalid email or password')
-      const errorMessage = err.response?.data?.message || err.message;
-      dispatch(authFailure(errorMessage));
+      const message = err.response?.data?.message || err.message;
+      dispatch(authFailure(message));
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md space-y-6">
         <h2 className="text-2xl font-bold text-center">Sign In</h2>
 
         {error && (
@@ -66,68 +66,58 @@ const LoginPage = () => {
 
         <form onSubmit={submitHandler} className="space-y-4">
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email Address
+            <label className="block text-sm font-medium text-gray-700">
+              Email
             </label>
             <input
-              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border rounded-md"
               placeholder="you@example.com"
+              required
             />
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label className="block text-sm font-medium text-gray-700">
               Password
             </label>
             <input
-              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
               required
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+            className={`w-full py-2 px-4 text-white rounded-md ${
               loading
                 ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
-        <div className="text-sm text-center">
+        <div className="text-center text-sm">
           Forgot Password?{" "}
           <Link
             href="/forgot-password"
-            className="font-medium text-blue-600 hover:text-blue-500"
+            className="text-blue-600 hover:text-blue-500"
           >
             Reset Here
           </Link>
         </div>
-        <div className="text-sm text-center">
+
+        <div className="text-center text-sm">
           New User?{" "}
-          <Link
-            href="/register"
-            className="font-medium text-blue-600 hover:text-blue-500"
-          >
+          <Link href="/register" className="text-blue-600 hover:text-blue-500">
             Register Here
           </Link>
         </div>

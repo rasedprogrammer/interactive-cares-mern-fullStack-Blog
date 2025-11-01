@@ -37,8 +37,10 @@ const LoginPage = () => {
 
     try {
       const userData = await login(email, password);
+      console.log("Befor Verify");
 
       if (userData?.isVerified === false) {
+        console.log("After Verify");
         // Redirect to verification page if not verified
         router.push(
           `/verify-email?email=${encodeURIComponent(userData.email)}`

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { fetchPosts, getAuthToken } from "@/utils/postApi";
+import { fetchPosts } from "@/utils/postApi";
 import PostCard from "@/components/PostCard";
 import { useSearchParams } from "next/navigation";
 import "swiper/css";
@@ -19,14 +19,6 @@ const Blogs = () => {
   const searchKeyword = searchParams.get("keyword") || "";
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (!token) {
-      setLoading(false);
-      setPosts([]);
-      setError("Please login or verify your email to see posts.");
-      return;
-    }
-
     const loadPosts = async () => {
       setLoading(true);
       try {

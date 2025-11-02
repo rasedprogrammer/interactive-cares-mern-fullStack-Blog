@@ -19,6 +19,10 @@ const LoginPage = () => {
   const dispatch = useDispatch();
   const { loading, error, userInfo } = useSelector((state) => state.auth);
 
+  if(userInfo.isVerified === false){
+    return false;
+  }
+
   useEffect(() => {
     if (userInfo) {
       router.push("/"); // Redirect after login

@@ -22,8 +22,8 @@ const HomePageComponent = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const searchParams = useSearchParams();
-  const searchKeyword = searchParams.get('keyword') || '';
-  const category = searchParams.get('category') || '';
+  const searchKeyword = searchParams.get("keyword") || "";
+  const category = searchParams.get("category") || "";
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -48,6 +48,7 @@ const HomePageComponent = () => {
   }, [searchKeyword]);
 
   // === PAGINATION LOGIC ===
+
   const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
   const paginatedPosts = posts.slice(startIndex, startIndex + POSTS_PER_PAGE);

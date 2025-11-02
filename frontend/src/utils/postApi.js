@@ -39,6 +39,8 @@ export const createPost = async (postData) => {
 // ----------------------------
 export const fetchPosts = async (keyword = "", category = "") => {
   let url = `${API_URL}/posts`;
+  console.log(url);
+
   const params = [];
   if (keyword) params.push(`keyword=${encodeURIComponent(keyword)}`);
   if (category) params.push(`category=${encodeURIComponent(category)}`);

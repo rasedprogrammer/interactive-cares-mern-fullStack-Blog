@@ -41,6 +41,7 @@ const createPost = asyncHandler(async (req, res) => {
   // 3. Create the post
   const post = new Post({
     user: req.user._id,
+    title,
     slug: postSlug,
     content,
     category,

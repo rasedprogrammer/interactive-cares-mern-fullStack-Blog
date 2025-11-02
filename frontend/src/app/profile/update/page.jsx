@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import useAuth from "@/hooks/useAuth";
 import { toast } from "react-toastify";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ProfileUpdatePage() {
   const { user, setUser, token } = useAuth();
@@ -62,6 +62,7 @@ export default function ProfileUpdatePage() {
       setFormData({ ...formData, image: file });
       setPhotoPreview(URL.createObjectURL(file));
     }
+    console.log(token, user);
   };
 
   const handleSubmit = async (e) => {

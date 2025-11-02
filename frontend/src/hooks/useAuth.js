@@ -2,7 +2,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import { logout, authSuccess } from "@/redux/slices/authSlice";
 
-export const useAuth = () => {
+const useAuth = () => {
   const dispatch = useDispatch();
   const { userInfo, loading, error } = useSelector((state) => state.auth);
 
@@ -28,3 +28,5 @@ export const useAuth = () => {
     handleLogout,
   };
 };
+
+export default useAuth;

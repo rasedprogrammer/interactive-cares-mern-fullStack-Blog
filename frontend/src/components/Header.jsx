@@ -9,7 +9,6 @@ import SearchBarComponent from "./SearchBarComponent";
 
 const Header = () => {
   const { userInfo } = useSelector((state) => state.auth);
-
   const dispatch = useDispatch();
   const router = useRouter();
 
@@ -17,11 +16,8 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  useEffect(() => setIsMounted(true), []);
 
-  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isMobileMenuOpen && !event.target.closest(".mobile-menu-container")) {
@@ -34,7 +30,6 @@ const Header = () => {
         setIsProfileDropdownOpen(false);
       }
     };
-
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, [isMobileMenuOpen, isProfileDropdownOpen]);
@@ -65,7 +60,6 @@ const Header = () => {
         Home
       </Link>
 
-      {/* 📰 BLOGS NAV LINK */}
       <Link
         href="/blogs"
         className={`${
@@ -76,8 +70,8 @@ const Header = () => {
         Blogs
       </Link>
 
-      {/* ✏️ Create Post (only for logged-in users) */}
-      {isMounted && userInfo && userInfo?.isVerified !== false && (
+      {/* ✏️ Write Post: Only for verified users */}
+      {isMounted && userInfo?.isVerified && (
         <Link
           href="/create-post"
           className={`${
@@ -105,8 +99,8 @@ const Header = () => {
       );
     }
 
-    // 🔹 If user is NOT logged in
-    if (!userInfo) {
+    // 🔹 If user is NOT logged in or NOT verified
+    if (!userInfo || userInfo?.isVerified === false) {
       return (
         <div
           className={`${
@@ -133,11 +127,10 @@ const Header = () => {
       );
     }
 
-    // 🔹 For MOBILE view
+    // 🔹 MOBILE verified user dropdown
     if (isMobile) {
       return (
         <div className="py-3 border-t border-gray-700">
-          {/* ✅ Show avatar if available */}
           <div className="flex items-center space-x-3 mb-3 p-2 bg-gray-750 rounded-lg">
             {userInfo?.profilePicture ? (
               <img
@@ -181,14 +174,13 @@ const Header = () => {
       );
     }
 
-    // 🔹 For DESKTOP view
+    // 🔹 DESKTOP verified user dropdown
     return (
       <div className="profile-dropdown-container relative hidden md:block">
         <button
           onClick={toggleProfileDropdown}
           className="flex items-center space-x-2 bg-gray-700 py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors shadow-lg border border-gray-600"
         >
-          {/* ✅ Profile Picture if available */}
           {userInfo?.profilePicture ? (
             <img
               src={userInfo.profilePicture}
@@ -200,7 +192,6 @@ const Header = () => {
               {userInfo.name?.charAt(0).toUpperCase() || "U"}
             </div>
           )}
-
           <span className="max-w-32 truncate">
             {userInfo.name || "Profile"}
           </span>
@@ -274,28 +265,28 @@ const Header = () => {
     <header className="bg-gradient-to-r from-gray-900 to-gray-800 text-white shadow-2xl sticky top-0 z-40 backdrop-blur-sm bg-opacity-95">
       <nav className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          {/* LOGO (Left) */}
+          {/* LOGO */}
           <Link
             href="/"
             className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent hover:from-purple-300 hover:to-pink-300 transition-all"
           >
-            📝 BlogApp
+            📝 SyncWave
           </Link>
 
-          {/* CENTER SECTION (Search Bar in Middle on Desktop) */}
+          {/* Search bar */}
           <div className="hidden md:flex flex-1 justify-center">
             <div className="w-full max-w-md">
               <SearchBarComponent />
             </div>
           </div>
 
-          {/* RIGHT SECTION (Navigation + User) */}
+          {/* Desktop links */}
           <div className="hidden md:flex items-center space-x-6">
             <NavigationLinks />
             <UserSection />
           </div>
 
-          {/* MOBILE MENU BUTTON */}
+          {/* Mobile menu button */}
           <button
             onClick={toggleMobileMenu}
             className="md:hidden p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
@@ -321,7 +312,7 @@ const Header = () => {
           </button>
         </div>
 
-        {/* MOBILE MENU */}
+        {/* Mobile menu */}
         {isMobileMenuOpen && (
           <div className="mobile-menu-container md:hidden mt-4 pb-4 border-t border-gray-700 pt-4 animate-slideDown">
             <SearchBarComponent isMobile={true} />

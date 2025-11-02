@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { register } from "@/utils/authApi";
 import {
   authRequest,
   authSuccess,
   authFailure,
 } from "@/redux/slices/authSlice";
+import { register } from "@/utils/authApi";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -15,35 +15,25 @@ const RegisterPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const router = useRouter();
   const dispatch = useDispatch();
-  const { loading, error, userInfo, unverifiedUser } = useSelector(
-    (state) => state.auth
-  );
+  const { loading, error } = useSelector((state) => state.auth);
+  const router = useRouter();
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    if (!name || !email || !password) {
+    if (!name || !email || !password)
       return dispatch(authFailure("Please fill in all fields."));
-    }
-    if (password !== confirmPassword) {
+    if (password !== confirmPassword)
       return dispatch(authFailure("Passwords do not match."));
-    }
 
     dispatch(authRequest());
     try {
       const userData = await register(name, email, password);
 
-      if (userData?.isVerified === false) {
-        dispatch(authSuccess(userData)); // Save unverified user
-        router.push(
-          `/verify-email?email=${encodeURIComponent(userData.email)}`
-        );
-      } else {
-        dispatch(authSuccess(userData));
-        router.push("/");
-      }
+      // Save user temporarily in Redux (unverified)
+      dispatch(authSuccess({ ...userData, isVerified: false }));
+
+      router.push(`/verify-email?email=${encodeURIComponent(userData.email)}`);
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
       dispatch(authFailure(msg));
@@ -54,13 +44,6 @@ const RegisterPage = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center">Register New Account</h2>
-
-        {error && (
-          <div className="p-3 text-sm text-red-700 bg-red-100 rounded">
-            {error}
-          </div>
-        )}
-
         <form onSubmit={submitHandler} className="space-y-4">
           <input
             type="text"
@@ -100,7 +83,6 @@ const RegisterPage = () => {
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
-
         <div className="text-sm text-center">
           Already have an account?{" "}
           <Link href="/login" className="text-blue-600 hover:text-blue-500">

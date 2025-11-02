@@ -12,7 +12,6 @@ const VerifyEmailPageComponent = () => {
   const router = useRouter();
   const params = useSearchParams();
 
-  // Get email from query (from register)
   useEffect(() => {
     const emailParam = params.get("email");
     if (emailParam) setEmail(emailParam);
@@ -32,16 +31,11 @@ const VerifyEmailPageComponent = () => {
         { email, code }
       );
 
-      // ------------------------
-      // Save JWT to localStorage
-      // ------------------------
       if (res.data?.user?.token) {
         localStorage.setItem("userInfo", JSON.stringify(res.data.user));
       }
 
       setMessage(res.data.message || "Email verified successfully!");
-
-      // Redirect to homepage (auto-login)
       setTimeout(() => router.push("/login"), 1500);
     } catch (err) {
       setMessage(err.response?.data?.message || "Verification failed.");
@@ -53,14 +47,16 @@ const VerifyEmailPageComponent = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center mb-4">
+        <h2 className="text-2xl font-bold text-center mb-4 text-gray-800">
           Verify Your Email
         </h2>
+
         {message && (
           <p className="p-2 text-center text-sm text-blue-700 bg-blue-100 rounded">
             {message}
           </p>
         )}
+
         <form onSubmit={handleVerify} className="space-y-4 mt-4">
           <input
             type="email"

@@ -58,33 +58,45 @@ const createPost = asyncHandler(async (req, res) => {
 });
 
 const getPublishedPosts = asyncHandler(async (req, res) => {
-  const { keyword, category } = req.query;
+  const { keyword, category, page = 1, limit } = req.query;
 
-  // Base filter: only published posts
-  const filter = { status: "Published" };
+  let filter = { status: "Published" };
 
-  // Search by keyword (case-insensitive)
   if (keyword) {
     filter.title = { $regex: keyword, $options: "i" };
   }
 
-  // Filter by category (if provided)
   if (category) {
     const categoryDoc = await Category.findOne({ slug: category });
-    if (!categoryDoc) {
-      return res.status(200).json({ posts: [] });
+    if (categoryDoc) {
+      filter.category = categoryDoc.name;
+    } else {
+      return res.json({ posts: [], page: 1, totalPages: 0, totalPosts: 0 });
     }
-    filter.category = categoryDoc.name;
   }
 
-  // Fetch posts
-  const posts = await Post.find(filter)
-    .sort({ createdAt: -1 })
-    .populate("user", "name email") // optional: populate user info
-    .lean(); // returns plain JS objects for better performance
+  // Convert to numbers
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
 
-  // Respond with result
-  res.status(200).json({ posts });
+  // Count total matching posts
+  const totalPosts = await Post.countDocuments(filter);
+
+  // Fetch only one page of posts
+  const posts = await Post.find(filter)
+    .populate("user", "name profilePicture bio")
+    .sort({ createdAt: -1 })
+    .skip((pageNumber - 1) * limitNumber)
+    .limit(limitNumber);
+
+  const totalPages = Math.ceil(totalPosts / limitNumber);
+
+  res.json({
+    posts,
+    page: pageNumber,
+    totalPages,
+    totalPosts,
+  });
 });
 
 const getPostBySlug = asyncHandler(async (req, res) => {

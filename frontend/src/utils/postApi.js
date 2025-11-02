@@ -38,17 +38,30 @@ export const createPost = async (postData) => {
 // FETCH POSTS (Protected route with optional token)
 // ----------------------------
 export const fetchPosts = async (keyword = "", category = "") => {
-  let url = `${API_URL}/posts`;
-  console.log(url);
+  try {
+    // Base endpoint for published posts
+    let url = `${API_URL}/posts`;
 
-  const params = [];
-  if (keyword) params.push(`keyword=${encodeURIComponent(keyword)}`);
-  if (category) params.push(`category=${encodeURIComponent(category)}`);
-  if (params.length > 0) url += `?${params.join("&")}`;
+    // Add query params dynamically
+    const params = [];
+    if (keyword) params.push(`keyword=${encodeURIComponent(keyword)}`);
+    if (category) params.push(`category=${encodeURIComponent(category)}`);
+    if (params.length > 0) url += `?${params.join("&")}`;
 
-  const config = getAuthConfig();
-  const { data } = await axios.get(url, config);
-  return Array.isArray(data) ? data : data.posts || [];
+    // Auth header (optional if API allows public access)
+    const config = getAuthConfig();
+
+    // Fetch posts
+    const { data } = await axios.get(url, config);
+
+    // Return always as an array
+    return Array.isArray(data) ? data : data.posts || [];
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch posts from server"
+    );
+  }
 };
 
 // ----------------------------

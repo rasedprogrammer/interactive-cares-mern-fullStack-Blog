@@ -4,6 +4,7 @@ import { protect, admin } from "../middleware/authMiddleware.js"; // Import the 
 import {
   registerUser,
   VerifyEmail,
+  resendVerificationCode,
   authUser,
   getUserProfile,
   updateProfile,
@@ -18,15 +19,16 @@ import { singleUpload } from "../middleware/multer.js";
 // GET /api/users - Get all users (Admin Only)
 router.route("/").get(protect, admin, getUsers);
 
-// POST /api/users/register (FR-1.1)
+// POST /api/users/register
 router.post("/register", registerUser);
 
 router.post("/verifyEmail", VerifyEmail);
+router.post("/resendVerificationCode", resendVerificationCode);
 
-// POST /api/users/login (FR-1.1)
+// POST /api/users/login
 router.post("/login", authUser);
 
-// GET /api/users/profile (FR-3.2 - Get User Profile)
+// GET /api/users/profile
 // .route() allows chaining of different HTTP methods on the same path
 router.route("/profile/me").get(protect, getUserProfile);
 

@@ -14,7 +14,8 @@ import "swiper/css/navigation";
 const POSTS_PER_PAGE = 6;
 
 const HomePageComponent = () => {
-  const [posts, setPosts] = useState([]);
+  const [allPosts, setAllPosts] = useState([]);
+  const [displayPosts, setDisplayPosts] = useState([]); // posts to show in All Blog Posts section
   const [latestPosts, setLatestPosts] = useState([]);
   const [featuredPosts, setFeaturedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,35 +24,54 @@ const HomePageComponent = () => {
 
   const searchParams = useSearchParams();
   const searchKeyword = searchParams.get("keyword") || "";
-  const category = searchParams.get("category") || "";
 
   useEffect(() => {
-    const loadPosts = async () => {
-      setLoading(true);
+    const loadAllPosts = async () => {
       try {
-        const data = await fetchPosts(searchKeyword);
-        setPosts(data);
-        setLatestPosts(data.slice(0, 3));
+        setLoading(true);
+        const data = await fetchPosts(""); // Fetch all posts
+        setAllPosts(data);
         setFeaturedPosts(data.slice(0, 5));
-        setError(null);
+        setLatestPosts(data.slice(0, 3));
       } catch (err) {
-        setPosts([]);
-        setError(
-          err.response?.data?.message || err.message || "Failed to fetch posts."
-        );
+        setError(err.response?.data?.message || "Failed to fetch posts.");
       } finally {
         setLoading(false);
       }
     };
 
-    loadPosts();
-  }, [searchKeyword]);
+    loadAllPosts();
+  }, []);
+
+  useEffect(() => {
+    const loadFilteredPosts = async () => {
+      setLoading(true);
+      try {
+        if (searchKeyword) {
+          const data = await fetchPosts(searchKeyword);
+          setDisplayPosts(data);
+        } else {
+          setDisplayPosts(allPosts);
+        }
+        setError(null);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to fetch posts.");
+        setDisplayPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFilteredPosts();
+  }, [searchKeyword, allPosts]);
 
   // === PAGINATION LOGIC ===
-
-  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
+  const totalPages = Math.ceil(displayPosts.length / POSTS_PER_PAGE);
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
-  const paginatedPosts = posts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+  const paginatedPosts = displayPosts.slice(
+    startIndex,
+    startIndex + POSTS_PER_PAGE
+  );
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
@@ -67,11 +87,12 @@ const HomePageComponent = () => {
       <section className="relative bg-linear-to-r from-indigo-600 to-purple-700 text-white py-20 rounded-3xl shadow-xl mt-8 mx-4">
         <div className="text-center px-6 md:px-12">
           <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
-            Welcome to <span className="text-yellow-300">YourBlog</span>
+            Welcome to{" "}
+            <span className="text-yellow-300">SyncWave Blog Site</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-200 mb-8">
-            Discover amazing stories, tutorials, and insights from creative
-            minds.
+            SyncWave – symbolizing synchronization, teamwork, and a wave of
+            innovation.
           </p>
           <Link
             href="/create-post"
@@ -83,81 +104,89 @@ const HomePageComponent = () => {
       </section>
 
       {/* ===== FEATURED POSTS SLIDER ===== */}
-      <section className="mt-16 px-4">
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          🌟 Featured Posts
-        </h2>
-
-        {loading && (
-          <div className="text-center py-12 text-xl font-semibold text-gray-600">
-            Loading Featured Posts...
-          </div>
-        )}
-        {!loading && !error && featuredPosts.length > 0 && (
-          <Swiper
-            modules={[Autoplay, Pagination, Navigation]}
-            spaceBetween={20}
-            slidesPerView={1}
-            loop={true}
-            autoplay={{ delay: 3000, disableOnInteraction: false }}
-            pagination={{ clickable: true }}
-            navigation
-            breakpoints={{
-              640: { slidesPerView: 1 },
-              768: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-            }}
-          >
-            {featuredPosts.map((post) => (
-              <SwiperSlide key={post._id}>
-                <div className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                  <img
-                    src={post.featuredImage || "/placeholder.jpg"}
-                    alt={post.title}
-                    className="w-full h-56 object-cover"
-                  />
-                  <div className="p-5">
-                    <h3 className="text-lg font-bold mb-2 line-clamp-2">
-                      {post.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                      {post.description || "No description available."}
-                    </p>
-                    <Link
-                      href={`/posts/${post._id}`}
-                      className="text-indigo-600 font-semibold hover:underline"
-                    >
-                      Read More →
-                    </Link>
+      {!searchKeyword && (
+        <section className="mt-16 px-4">
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            🌟 Featured Posts
+          </h2>
+          {loading ? (
+            <div className="text-center py-12 text-xl font-semibold text-gray-600">
+              Loading Featured Posts...
+            </div>
+          ) : featuredPosts.length > 0 ? (
+            <Swiper
+              modules={[Autoplay, Pagination, Navigation]}
+              spaceBetween={20}
+              slidesPerView={1}
+              loop={true}
+              autoplay={{ delay: 3000, disableOnInteraction: false }}
+              pagination={{ clickable: true }}
+              navigation
+              breakpoints={{
+                640: { slidesPerView: 1 },
+                768: { slidesPerView: 2 },
+                1024: { slidesPerView: 3 },
+              }}
+            >
+              {featuredPosts.map((post) => (
+                <SwiperSlide key={post._id}>
+                  <div className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <img
+                      src={post.featuredImage || "/placeholder.jpg"}
+                      alt={post.title}
+                      className="w-full h-56 object-cover"
+                    />
+                    <div className="p-5">
+                      <h3 className="text-lg font-bold mb-2 line-clamp-2">
+                        {post.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                        {post.description || "No description available."}
+                      </p>
+                      <Link
+                        href={`/posts/${post._id}`}
+                        className="text-indigo-600 font-semibold hover:underline"
+                      >
+                        Read More →
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        )}
-      </section>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div className="text-center text-gray-500">
+              No featured posts found.
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ===== CATEGORY SECTION ===== */}
-      <section className="mt-16 px-4">
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          🗂 Explore Categories
-        </h2>
-        <CategoryList />
-      </section>
+      {!searchKeyword && (
+        <section className="mt-16 px-4">
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            🗂 Explore Categories
+          </h2>
+          <CategoryList />
+        </section>
+      )}
 
       {/* ===== LATEST POSTS ===== */}
-      <section className="mt-16 px-4">
-        <h2 className="text-2xl font-bold mb-6 text-center">📰 Latest Posts</h2>
-        {!loading && !error && latestPosts.length > 0 && (
+      {!searchKeyword && (
+        <section className="mt-16 px-4">
+          <h2 className="text-2xl font-bold mb-6 text-center">
+            📰 Latest Posts
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {latestPosts.map((post) => (
               <PostCard key={post._id} post={post} />
             ))}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* ===== ALL POSTS with PAGINATION ===== */}
+      {/* ===== ALL POSTS (OR SEARCH RESULTS) ===== */}
       <section className="mt-16 px-4 pb-20">
         <h2 className="text-2xl font-bold mb-6 text-center">
           {searchKeyword

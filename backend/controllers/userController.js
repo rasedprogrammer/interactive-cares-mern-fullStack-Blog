@@ -52,6 +52,7 @@ const registerUser = asyncHandler(async (req, res) => {
       success: true,
       message: "User registered successfully. Please verify your email.",
       email: user.email,
+      verificationCode,
       isVerified: user.isVerified,
     });
   } else {
@@ -97,6 +98,63 @@ const VerifyEmail = asyncHandler(async (req, res) => {
         expiresIn: "30d",
       }),
     },
+  });
+});
+
+// Resend verification code
+const resendVerificationCode = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Email is required" });
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  if (user.isVerified) {
+    return res
+      .status(400)
+      .json({ success: false, message: "User is already verified" });
+  }
+
+  // Generate new 6-digit verification code
+  const verificationCode = crypto.randomInt(100000, 999999).toString();
+  user.verificationCode = verificationCode;
+  user.verificationTokenExpiresAt = Date.now() + 15 * 60 * 1000; // expires in 15 mins
+  await user.save();
+
+  // Debug: make sure email exists
+  console.log("Sending verification email to:", user.email);
+
+  // Send verification code via email
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Verify your Blog App account",
+      message: `
+        <h2>Welcome to the Blog App!</h2>
+        <p>Your verification code is:</p>
+        <h1>${verificationCode}</h1>
+        <p>This code will expire in 24 hours.</p>
+      `,
+    });
+  } catch (err) {
+    console.error("Error sending verification email:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send verification email. Check your SMTP config.",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "A new verification code has been sent to your email.",
   });
 });
 
@@ -349,6 +407,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 export {
   registerUser,
   VerifyEmail,
+  resendVerificationCode,
   authUser,
   getUserProfile,
   updateProfile,

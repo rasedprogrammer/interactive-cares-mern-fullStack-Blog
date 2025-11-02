@@ -64,3 +64,14 @@ export const resetPassword = async (token, password) => {
   );
   return data.message; // Return success message
 };
+
+
+export const verifyEmailApi = async (email, code) => {
+  const config = { headers: { "Content-Type": "application/json" } };
+  const { data } = await axios.post(
+    `${API_URL}/users/verifyEmail`,
+    { email, code },
+    config
+  );
+  return data;
+};

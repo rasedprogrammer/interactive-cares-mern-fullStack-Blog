@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { verifyEmail as verifyEmailApi } from "@/utils/authApi";
+import { verifyEmailApi } from "@/utils/authApi";
 
 export default function VerifyEmailPage({ params }) {
   const router = useRouter();

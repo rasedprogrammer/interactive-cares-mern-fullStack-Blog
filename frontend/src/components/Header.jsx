@@ -77,7 +77,7 @@ const Header = () => {
       </Link>
 
       {/* ✏️ Create Post (only for logged-in users) */}
-      {isMounted && userInfo && (
+      {isMounted && userInfo && userInfo?.isVerified !== false && (
         <Link
           href="/create-post"
           className={`${

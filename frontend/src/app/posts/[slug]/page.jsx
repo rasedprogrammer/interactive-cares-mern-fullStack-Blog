@@ -5,9 +5,8 @@ import ReactionButtons from "@/components/ReactionButtons"; // Client Component
 import CommentSection from "./CommentSection"; // Client Component
 import CategoryList from "@/components/CategoryList"; // Client Component
 import Link from "next/link";
-// import { getUserSession } from '@/lib/session'; // Placeholder for session data if needed server-side
 
-// --- 1. SEO METADATA GENERATION (FR-6.4, Follow SEO best practices) ---
+// --- 1. SEO METADATA GENERATION
 export async function generateMetadata({ params }) {
   const resolvedParams = await params; // <-- CRITICAL FIX: AWAIT PARAMS
   const slug = resolvedParams.slug;
@@ -39,7 +38,7 @@ export async function generateMetadata({ params }) {
       title: metaTitle,
       description: metaDescription,
       // NOTE: Replace with your actual deployed URL
-      url: `http://localhost:3000/posts/${slug}`,
+      url: `${process.env.NEXT_PUBLIC_CLIENT_URL}/posts/${slug}`,
       type: "article",
       images: [
         {

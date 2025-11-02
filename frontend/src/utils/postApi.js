@@ -46,7 +46,7 @@ export const fetchPosts = async (keyword = "", category = "") => {
 
   const config = getAuthConfig();
   const { data } = await axios.get(url, config);
-  return data;
+  return Array.isArray(data) ? data : data.posts || [];
 };
 
 // ----------------------------

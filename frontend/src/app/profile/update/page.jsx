@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useAuth } from "@/hooks/useAuth";
+//import { useAuth } from "@/hooks/useAuth";
 import { toast } from "react-toastify";
 
 export default function ProfileUpdatePage() {

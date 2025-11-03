@@ -2,18 +2,22 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { resetPassword } from "@/utils/authApi";
+import { useDispatch } from "react-redux";
+import { resetPassword } from "@/utils/authApi"; // Your API helper
+import { authSuccess } from "@/redux/slices/authSlice";
 
 const ResetPasswordPage = () => {
   const params = useParams();
-  const token = params.token; // Get the token from the dynamic route segment
+  const token = params.token;
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
+
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,14 +36,19 @@ const ResetPasswordPage = () => {
 
     setLoading(true);
     try {
-      // Call the backend reset API with the token and new password
-      const successMessage = await resetPassword(token, password);
-      setMessage(successMessage);
+      // Call backend API
+      const res = await resetPassword(token, password);
 
-      // Redirect to login after a successful reset
-      setTimeout(() => {
-        router.push("/login");
-      }, 3000);
+      // If backend returns user object with token, save it
+      if (res?.user?.token) {
+        localStorage.setItem("userInfo", JSON.stringify(res.user));
+        dispatch(authSuccess(res.user));
+        setMessage("Password reset successful! Redirecting to home...");
+        setTimeout(() => router.push("/"), 1500);
+      } else {
+        setMessage("Password reset successful! Please login.");
+        setTimeout(() => router.push("/login"), 1500);
+      }
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
@@ -73,10 +82,7 @@ const ResetPasswordPage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               New Password
             </label>
             <input
@@ -91,10 +97,7 @@ const ResetPasswordPage = () => {
           </div>
 
           <div>
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
               Confirm New Password
             </label>
             <input
@@ -111,9 +114,7 @@ const ResetPasswordPage = () => {
             type="submit"
             disabled={loading}
             className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
+              loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
             }`}
           >
             {loading ? "Resetting..." : "Reset Password"}

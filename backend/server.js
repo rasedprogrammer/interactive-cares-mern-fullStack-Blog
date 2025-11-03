@@ -1,22 +1,9 @@
-// blog-application/backend/server.js
 
-// const express = require('express');
-// const dotenv = require('dotenv');
-// const connectDB = require('./config/db');
-// const cors = require('cors');
 import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cors from "cors";
 
-// Import User Routes
-// const userRoutes = require('./routes/userRoutes');
-// const postRoutes = require('./routes/postRoutes');
-// const commentRoutes = require('./routes/commentRoutes');
-// const categoryRoutes = require('./routes/categoryRoutes');
-// const uploadRoutes = require('./routes/uploadRoutes');
-// // Import Error Handling Middleware (will create in the next step)
-// const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 import userRoutes from "./routes/userRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
@@ -35,7 +22,12 @@ const app = express();
 
 // Middleware
 // 1. CORS for allowing requests from the frontend
-app.use(cors());
+app.use(cors({
+    origin: "https://interactive-cares-mern-full-stack-b.vercel.app",
+    credentials: true, // optional — needed if using cookies/auth headers
+  })
+);
+
 
 // 2. Body parser for JSON data
 app.use(express.json());

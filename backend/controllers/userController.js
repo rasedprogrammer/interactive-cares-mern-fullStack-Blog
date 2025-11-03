@@ -340,9 +340,22 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   await user.save(); // Save triggers the password hash
 
+  // Generate JWT token
+  const tokenJWT = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
+  });
+
   res.status(200).json({
-    message:
-      "Password reset successful. You can now log in with your new password.",
+    success: true,
+    message: "Password reset successful! You are now logged in.",
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profilePicture: user.profilePicture,
+      token: tokenJWT,
+    },
   });
 });
 

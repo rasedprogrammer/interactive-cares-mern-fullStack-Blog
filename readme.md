@@ -1,6 +1,7 @@
 
 ---
-
+Alternative Link - <a href="http://https://ic-blog.onrender.com/">https://ic-blog.onrender.com/</a>
+---
 ## ✅ Final Verification Against Original SRS
 
 | SRS Section | Requirement | Implementation Status | Notes on Completion |

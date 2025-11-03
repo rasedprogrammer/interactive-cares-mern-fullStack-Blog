@@ -10,7 +10,7 @@ export default function ResendVerification() {
     e.preventDefault();
     try {
       const res = await axios.post(
-        "http://localhost:8000/api/users/resend-verification",
+        `${process.env.NEXT_PUBLIC_API_URL}/users/resend-verification`,
         { email }
       );
       setMsg(res.data.message);

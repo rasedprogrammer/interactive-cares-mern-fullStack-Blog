@@ -51,7 +51,7 @@ export const forgotPassword = async (email) => {
     { email },
     config
   );
-  return data.message; // Return success message
+  return data; // Return success message
 };
 
 // @desc Submit new password with token
@@ -62,7 +62,7 @@ export const resetPassword = async (token, password) => {
     { password },
     config
   );
-  return data.message; // Return success message
+  return data; // return the full object, not just data.message
 };
 
 

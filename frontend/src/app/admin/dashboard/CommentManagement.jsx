@@ -1,16 +1,14 @@
-// blog-application/frontend/src/app/admin/dashboard/CommentManagement.jsx
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios"; // Need for the generic 'all-admin' fetch
+import axios from "axios";
 import { getAuthToken } from "@/utils/postApi";
 import { deleteCommentAdmin, toggleCommentSuspend } from "@/utils/adminApi";
 import Link from "next/link";
 
-// Get the API URL from environment variables
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// FR-4.3: Admin: Fetch ALL Comments (including suspended) - Uses the dedicated Admin route
+// Fetch all comments (admin)
 const fetchAllCommentsAdmin = async () => {
   try {
     const token = getAuthToken();
@@ -21,7 +19,7 @@ const fetchAllCommentsAdmin = async () => {
         Authorization: `Bearer ${token}`,
       },
     };
-    // This relies on the backend route: GET /api/comments/all-admin
+
     const { data } = await axios.get(`${API_URL}/comments/all-admin`, config);
     return data;
   } catch (error) {
@@ -35,7 +33,10 @@ const CommentManagement = () => {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
 
-  // Fetch All Comments on mount
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const commentsPerPage = 6;
+
   useEffect(() => {
     const loadComments = async () => {
       try {
@@ -50,7 +51,6 @@ const CommentManagement = () => {
     loadComments();
   }, []);
 
-  // --- Moderation Handlers (FR-4.3) ---
   const handleAction = async (commentId, action, postTitle) => {
     let actionFunc =
       action === "delete" ? deleteCommentAdmin : toggleCommentSuspend;
@@ -64,13 +64,12 @@ const CommentManagement = () => {
         setMessage(null);
         const result = await actionFunc(commentId);
 
-        // Update local state (optimistic UI update)
         setComments((prev) =>
           prev
             .map((c) => {
               if (c._id === commentId) {
-                if (action === "delete") return null; // Mark for filtering
-                return { ...c, isSuspended: result }; // result is the new isSuspended status
+                if (action === "delete") return null;
+                return { ...c, isSuspended: result };
               }
               return c;
             })
@@ -94,11 +93,22 @@ const CommentManagement = () => {
     return <div className="text-center py-10">Loading All Comments...</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
 
+  // Pagination logic
+  const totalPages = Math.ceil(comments.length / commentsPerPage);
+  const indexOfLast = currentPage * commentsPerPage;
+  const indexOfFirst = indexOfLast - commentsPerPage;
+  const currentComments = comments.slice(indexOfFirst, indexOfLast);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold">
         Comment Moderation ({comments.length} Total)
       </h2>
+
       {message && (
         <div className="p-3 mb-4 text-sm text-green-700 bg-green-100 rounded-lg">
           {message}
@@ -127,19 +137,18 @@ const CommentManagement = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {comments.map((comment) => (
+            {currentComments.map((comment) => (
               <tr
                 key={comment._id}
                 className={comment.isSuspended ? "bg-red-50" : ""}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {comment.user ? comment.user.name : "Deleted User"}{" "}
+                  {comment.user ? comment.user.name : "Deleted User"}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700 max-w-xs overflow-hidden text-ellipsis">
                   {comment.content.substring(0, 50)}...
                 </td>
                 <td className="px-6 py-4 text-sm text-blue-600 hover:underline">
-                  {/* Link to the post view (optional) */}
                   <Link href={`/posts/${comment.post.slug}`}>
                     {comment.post.title.substring(0, 20)}...
                   </Link>
@@ -156,7 +165,6 @@ const CommentManagement = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  {/* Suspend/Activate Toggle Button */}
                   <button
                     onClick={() =>
                       handleAction(comment._id, "suspend", comment.post.title)
@@ -168,7 +176,6 @@ const CommentManagement = () => {
                     {comment.isSuspended ? "Activate" : "Suspend"}
                   </button>
 
-                  {/* Delete Button (FR-4.3) */}
                   <button
                     onClick={() =>
                       handleAction(comment._id, "delete", comment.post.title)
@@ -182,6 +189,37 @@ const CommentManagement = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center items-center mt-6 space-x-2">
+        <button
+          onClick={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`px-4 py-2 text-sm font-medium rounded ${
+            currentPage === 1
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-gray-800 text-white hover:bg-gray-700"
+          }`}
+        >
+          Prev
+        </button>
+
+        <span className="text-sm font-medium">
+          Page {currentPage} of {totalPages}
+        </span>
+
+        <button
+          onClick={() => goToPage(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`px-4 py-2 text-sm font-medium rounded ${
+            currentPage === totalPages
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-gray-800 text-white hover:bg-gray-700"
+          }`}
+        >
+          Next
+        </button>
       </div>
     </div>
   );

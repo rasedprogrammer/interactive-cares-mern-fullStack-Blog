@@ -13,8 +13,17 @@ const UserManagement = ({ initialUsers }) => {
   const [currentUserToEdit, setCurrentUserToEdit] = useState(null);
   const [loadingUpdate, setLoadingUpdate] = useState(false);
 
-  // NOTE: The logic should be the same as what was in the original page.jsx,
-  // replacing the local `users` state with `initialUsers` as the starting point.
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 8;
+
+  // Calculate indexes
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(users.length / usersPerPage);
+
+  // --- Update user role handler ---
   const handleUpdate = async (e) => {
     e.preventDefault();
     setLoadingUpdate(true);
@@ -23,13 +32,11 @@ const UserManagement = ({ initialUsers }) => {
     if (!currentUserToEdit || !currentUserToEdit.role) return;
 
     try {
-      // Call the existing backend API: PUT /api/users/:id
       const updatedUserData = await updateUser(currentUserToEdit._id, {
         name: currentUserToEdit.name,
         role: currentUserToEdit.role,
       });
 
-      // Update the local state in the table
       setUsers(
         users.map((u) => (u._id === updatedUserData._id ? updatedUserData : u))
       );
@@ -39,26 +46,20 @@ const UserManagement = ({ initialUsers }) => {
       setLoadingUpdate(false);
       setDeleteSuccess(
         `User ${updatedUserData.name}'s role updated to ${updatedUserData.role}.`
-      ); // Re-use success message
+      );
     } catch (err) {
       setError(err.response?.data?.message || err.message);
       setLoadingUpdate(false);
     }
   };
 
-  // --- Delete Handler (FR-2.4) ---
+  // --- Delete user handler ---
   const handleDelete = async (userId, userName) => {
-    if (
-      window.confirm(
-        `Are you sure you want to DELETE the account for: ${userName}?`
-      )
-    ) {
+    if (window.confirm(`Are you sure you want to DELETE: ${userName}?`)) {
       try {
         await deleteUser(userId);
-
         setUsers(users.filter((user) => user._id !== userId));
         setDeleteSuccess(`User ${userName} deleted successfully.`);
-
         setTimeout(() => setDeleteSuccess(null), 3000);
       } catch (err) {
         setError(err);
@@ -67,9 +68,19 @@ const UserManagement = ({ initialUsers }) => {
     }
   };
 
+  // --- Pagination Buttons ---
+  const goToPage = (pageNum) => {
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      setCurrentPage(pageNum);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold">Registered Users</h2>
+      <h2 className="text-2xl font-semibold">
+        Registered Users ({users.length})
+      </h2>
+
       {error && (
         <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
           Error: {error}
@@ -81,33 +92,21 @@ const UserManagement = ({ initialUsers }) => {
         </div>
       )}
 
+      {/* --- Table --- */}
       <div className="overflow-x-auto bg-white shadow-lg rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Role
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr
-                key={user._id}
-                className={user.role === "Admin" ? "bg-indigo-50" : ""}
-              >
+            {currentUsers.map((user) => (
+              <tr key={user._id} className={user.role === "Admin" ? "bg-indigo-50" : ""}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {user._id.substring(0, 6)}...
                 </td>
@@ -159,7 +158,43 @@ const UserManagement = ({ initialUsers }) => {
           </tbody>
         </table>
       </div>
-      {/* --- EDIT MODAL (RENDERED AT THE BOTTOM) --- */}
+
+      {/* --- Pagination Controls --- */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center mt-4 space-x-2">
+          <button
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50 hover:bg-gray-300"
+          >
+            Prev
+          </button>
+
+          {[...Array(totalPages)].map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goToPage(i + 1)}
+              className={`px-3 py-1 rounded-md ${
+                currentPage === i + 1
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50 hover:bg-gray-300"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* --- Edit Modal --- */}
       {isEditing && currentUserToEdit && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md">
@@ -167,7 +202,6 @@ const UserManagement = ({ initialUsers }) => {
               Edit User: {currentUserToEdit.name}
             </h3>
             <form onSubmit={handleUpdate} className="space-y-4">
-              {/* Email (Read-Only) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Email
@@ -180,7 +214,6 @@ const UserManagement = ({ initialUsers }) => {
                 />
               </div>
 
-              {/* Role Selector */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Change Role
@@ -200,7 +233,6 @@ const UserManagement = ({ initialUsers }) => {
                 </select>
               </div>
 
-              {/* Buttons */}
               <div className="flex justify-end space-x-3 pt-2">
                 <button
                   type="button"

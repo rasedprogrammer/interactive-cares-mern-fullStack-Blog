@@ -1,8 +1,3 @@
-// blog-application/backend/controllers/commentController.js
-
-// const asyncHandler = require('express-async-handler');
-// const Comment = require('../models/Comment');
-// const Post = require('../models/Post');
 import asyncHandler from "express-async-handler";
 import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
@@ -26,17 +21,14 @@ const createComment = asyncHandler(async (req, res) => {
     throw new Error("Post not found.");
   }
 
-  // 2. Create the comment (FR-4.1)
+
   const comment = await Comment.create({
     post: postId,
     user: userId,
     content: content,
   });
 
-  // NOTE: This is where we would trigger the 'notification' (FR-4.5)
-  // to the post author. We will skip the actual email sending for now.
-
-  // 3. Populate the user field for immediate display on the frontend
+ 
   const newComment = await Comment.findById(comment._id).populate(
     "user",
     "name"
@@ -45,9 +37,6 @@ const createComment = asyncHandler(async (req, res) => {
   res.status(201).json(newComment);
 });
 
-// @desc    Fetch all comments for a specific post
-// @route   GET /api/comments/:postId
-// @access  Public (FR-4.1: Anyone can view comments)
 const getPostComments = asyncHandler(async (req, res) => {
   const { postId } = req.params;
 
@@ -62,9 +51,7 @@ const getPostComments = asyncHandler(async (req, res) => {
   res.json(comments);
 });
 
-// @desc    Admin: Toggle comment suspension (FR-4.3)
-// @route   PUT /api/comments/:id/suspend
-// @access  Private/Admin
+
 const suspendComment = asyncHandler(async (req, res) => {
   const comment = await Comment.findById(req.params.id);
 
@@ -82,9 +69,7 @@ const suspendComment = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Admin: Delete a comment (FR-4.3)
-// @route   DELETE /api/comments/:id
-// @access  Private/Admin
+
 const deleteComment = asyncHandler(async (req, res) => {
   const comment = await Comment.findById(req.params.id);
 

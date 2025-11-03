@@ -2,24 +2,29 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
 import { resetPassword } from "@/utils/authApi";
+import { authSuccess } from "@/redux/slices/authSlice";
 
 const ResetPasswordPage = () => {
   const params = useParams();
-  const token = params.token; // Get the token from the dynamic route segment
+  const token = params.token;
+
+  const dispatch = useDispatch();
+  const router = useRouter();
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
-  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setMessage(null);
 
+    // Validation
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -31,17 +36,35 @@ const ResetPasswordPage = () => {
     }
 
     setLoading(true);
-    try {
-      // Call the backend reset API with the token and new password
-      const successMessage = await resetPassword(token, password);
-      setMessage(successMessage);
 
-      // Redirect to login after a successful reset
-      setTimeout(() => {
-        router.push("/login");
-      }, 3000);
+    try {
+      const res = await resetPassword(token, password);
+
+      // Ensure we always have a string message
+      setMessage(res?.message || "Password reset successful!");
+      console.log(message);
+        
+
+      if (res?.user?.token) {
+        // Save user info in localStorage
+        localStorage.setItem("userInfo", JSON.stringify(res?.user));
+
+        // Update Redux state
+        dispatch(authSuccess(res?.user));
+
+        // Redirect to dashboard/home
+        setTimeout(() => router.push("/"), 1500);
+      } else {
+        // Redirect to login if no token returned
+        setTimeout(() => router.push("/login"), 1500);
+      }
     } catch (err) {
-      setError(err.response?.data?.message || err.message);
+      // Ensure error is always a string
+      const errorMessage =
+        (err?.response && err?.response?.data && err?.response?.data?.message) ||
+        err?.message ||
+        "Something went wrong. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

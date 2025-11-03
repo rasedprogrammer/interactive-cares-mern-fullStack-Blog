@@ -12,7 +12,7 @@ const AdminTabs = ({ initialUsers }) => {
   const tabs = [
     { id: "users", label: "User Management" },
     { id: "posts", label: "Post Moderation " },
-    { id: "categories", label: "Category Management (NEW)" },
+    { id: "categories", label: "Category Management" },
     { id: "comments", label: "Comment Moderation " },
   ];
 

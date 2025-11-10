@@ -75,3 +75,13 @@ export const verifyEmailApi = async (email, code) => {
   );
   return data;
 };
+
+
+export const fetchAuthorProfile = async (id) => {
+  try {
+    const { data } = await axios.get(`${API_URL}/users/author/${id}`);
+    return data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Failed to fetch author profile");
+  }
+};

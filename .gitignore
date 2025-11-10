@@ -6,7 +6,6 @@ backend/node_modules/
 frontend/.env.local
 frontend/.env
 backend/.env
-
 # Ignore logs
 *.log
 
@@ -18,3 +17,5 @@ backend/dist/
 # OS files
 .DS_Store
 Thumbs.db
+config.bat
+node_modules

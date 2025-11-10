@@ -22,11 +22,13 @@ const app = express();
 
 // Middleware
 // 1. CORS for allowing requests from the frontend
-app.use(cors({
-    origin: "https://interactive-cares-mern-full-stack-b.vercel.app",
-    credentials: true, // optional — needed if using cookies/auth headers
-  })
-);
+// app.use(cors({
+//     origin: "https://interactive-cares-mern-full-stack-b.vercel.app",
+//     credentials: true, // optional — needed if using cookies/auth headers
+//   })
+// );
+
+app.use(cors());
 
 
 // 2. Body parser for JSON data

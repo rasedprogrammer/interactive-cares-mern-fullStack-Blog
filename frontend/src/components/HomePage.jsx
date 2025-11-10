@@ -130,27 +130,7 @@ const HomePageComponent = () => {
             >
               {featuredPosts.map((post) => (
                 <SwiperSlide key={post._id}>
-                  <div className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                    <img
-                      src={post.featuredImage || "/placeholder.jpg"}
-                      alt={post.title}
-                      className="w-full h-56 object-cover"
-                    />
-                    <div className="p-5">
-                      <h3 className="text-lg font-bold mb-2 line-clamp-2">
-                        {post.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                        {post.description || "No description available."}
-                      </p>
-                      <Link
-                        href={`/posts/${post._id}`}
-                        className="text-indigo-600 font-semibold hover:underline"
-                      >
-                        Read More →
-                      </Link>
-                    </div>
-                  </div>
+                  <PostCard key={post._id} post={post} />
                 </SwiperSlide>
               ))}
             </Swiper>

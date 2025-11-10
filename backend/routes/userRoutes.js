@@ -7,6 +7,7 @@ import {
   resendVerificationCode,
   authUser,
   getUserProfile,
+  getAuthorProfile,
   updateProfile,
   getUsers,
   updateUserByAdmin,
@@ -31,6 +32,8 @@ router.post("/login", authUser);
 // GET /api/users/profile
 // .route() allows chaining of different HTTP methods on the same path
 router.route("/profile/me").get(protect, getUserProfile);
+
+router.get("/author/:id", getAuthorProfile);
 
 router.put("/profile-update", protect, singleUpload, updateProfile);
 

@@ -6,7 +6,8 @@ backend/node_modules/
 frontend/.env.local
 frontend/.env
 backend/.env
-
+.env
+.env.local
 # Ignore logs
 *.log
 
